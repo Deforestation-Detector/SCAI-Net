@@ -35,3 +35,29 @@
 * Used to count number of sea lions in images which would allow researchers and scientists time to put their skills toward actually helping restore number of wild sea lions which is declining rapidly.
 * Feel like it would be on the easier side compared to the other models listed above.
 
+## Building classification: http://www.classic.grss-ieee.org/earthvision2021/challenge.html
+### Notes:
+* Dataset consists of footage post-hurricane harvey. Would be used for disaster relief. Seems as important as the first dataset/task, yet somehow easier. Seems promising
+
+## Deteroriating (and subsequent restoration) of environment: http://www.classic.grss-ieee.org/earthvision2021/challenge.html
+### Notes:
+* Used for understanding when environments start to deteriorate and regenerate throughout seasons.
+
+## Land Cover Classification: https://landcover.ai/
+### Notes:
+* Used for infrastructure design
+
+## Iceberg Detection: https://www.kaggle.com/c/statoil-iceberg-classifier-challenge
+### Notes:
+* Could be used for a number of different things regarding climate change as well as preventing threats to navigation
+
+## Settlement detection: https://www.grss-ieee.org/community/technical-committees/2021-ieee-grss-data-fusion-contest-track-dse/
+### Notes:
+* Used for detecting settlements which are deprived of electricity.
+
+## Location of deforestation and human encroachment: https://www.kaggle.com/c/planet-understanding-the-amazon-from-space
+### Notes:
+* Used to help landholders make informed decisions about how/when they might need to respond.
+
+## Time flow prediction: https://www.kaggle.com/c/draper-satellite-image-chronology
+* Used to create chronological ordering of images to then determine if a process is deteriorating or regenerating
