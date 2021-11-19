@@ -1,4 +1,4 @@
-# Binky
+# Project Brainstorming
 ---
 ## Disaster response: https://spacenet.ai/sn6-challenge/
 ### Notes:
