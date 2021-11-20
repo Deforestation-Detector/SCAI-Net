@@ -63,3 +63,6 @@
 * Used to create chronological ordering of images to then determine if a process is deteriorating or regenerating
 
 ## Brazilian Amazon Rainforest Degredation: https://www.kaggle.com/mbogernetto/brazilian-amazon-rainforest-degradation
+
+## Flood Risk Prediction: https://www.kaggle.com/kmader/satellite-images-of-hurricane-damage
+* Use satellite images of before and after of area affected by hurricane harvey to make predictions about flood risk of particular area
