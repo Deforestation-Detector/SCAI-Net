@@ -66,3 +66,6 @@
 
 ## Flood Risk Prediction: https://www.kaggle.com/kmader/satellite-images-of-hurricane-damage
 * Use satellite images of before and after of area affected by hurricane harvey to make predictions about flood risk of particular area
+
+## US Wildfires: https://www.kaggle.com/rtatman/188-million-us-wildfires
+* Can be used to determine whether wildfires are ecoming more or less frequent, which counties are the most fire prone, or the cause of the fire.
