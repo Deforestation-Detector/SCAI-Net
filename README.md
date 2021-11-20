@@ -61,3 +61,5 @@
 
 ## Time flow prediction: https://www.kaggle.com/c/draper-satellite-image-chronology
 * Used to create chronological ordering of images to then determine if a process is deteriorating or regenerating
+
+## Brazilian Amazon Rainforest Degredation: https://www.kaggle.com/mbogernetto/brazilian-amazon-rainforest-degradation
