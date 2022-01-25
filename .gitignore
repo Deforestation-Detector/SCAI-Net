@@ -1,2 +1,7 @@
 /data
 /venv
+/neighbors
+.ipynb_checkpoints
+
+# stupid macos file
+.DS_Store
