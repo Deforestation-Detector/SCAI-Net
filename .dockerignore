@@ -1,0 +1,5 @@
+# do not copy the ./data directory
+data
+
+# do not copy the ./venv directory
+venv
