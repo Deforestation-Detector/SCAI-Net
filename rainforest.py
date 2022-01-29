@@ -14,6 +14,7 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, GlobalAveragePooling2D
 from tensorflow.keras.models import Sequential, Model
 import math
 from PIL import Image
+print()
 
 # %% [markdown]
 # # Defining Constants
