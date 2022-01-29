@@ -5,6 +5,7 @@
 # # Import Necessary Libraries
 
 # %%
+import os
 import numpy as np
 from matplotlib import pyplot as plt
 import pandas as pd
@@ -14,7 +15,6 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, GlobalAveragePooling2D
 from tensorflow.keras.models import Sequential, Model
 import math
 from PIL import Image
-print()
 
 # %% [markdown]
 # # Defining Constants
@@ -28,6 +28,7 @@ IMG_DIMS = 256
 EPOCHS = 10
 DATA_PATH = 'data/train-jpg/'
 THRESHOLD = 0.5
+CHECKPOINT_PATH = 'model/'
 
 # %% [markdown]
 # # Preprocess data
@@ -221,6 +222,18 @@ ds_model.add(Dropout(0.1))
 ds_model.add(Dense(n_labels, activation = 'sigmoid'))
 
 # %% [markdown]
+# ### Save the best model
+# %%
+if os.path.isdir(CHECKPOINT_PATH) == False:
+    os.mkdir(CHECKPOINT_PATH)
+
+val_loss_checkpoint = tf.keras.callbacks.ModelCheckpoint(
+    filepath=CHECKPOINT_PATH,
+    monitor='val_loss',
+    mode='min',
+    save_best_only=True
+)
+# %% [markdown]
 # ### Compile the model
 
 # %%
@@ -228,7 +241,7 @@ opt = K.optimizers.Adam(learning_rate=0.01)
 
 ds_model.compile(optimizer='adam',
     loss = 'binary_crossentropy',
-    metrics=macro_f1)
+    metrics=[tf.keras.metrics.Precision()])
 
 # %% [markdown]
 # # Train model
@@ -236,6 +249,7 @@ ds_model.compile(optimizer='adam',
 
 # %%
 ds_history = ds_model.fit(train_ds,
+    callbacks = [val_loss_checkpoint],
     epochs = EPOCHS,
     batch_size = MODEL_BATCH_SIZE,
     validation_data = val_ds,
@@ -267,6 +281,18 @@ plt.legend(loc='upper right')
 plt.show()
 
 # %% [markdown]
+# ### Plotting the precision
+# %%
+plt.figure(figsize=(10, 8))
+plt.title('Precision over time')
+plt.xlabel('Epochs')
+plt.ylabel('Precision')
+history_df['precision'].plot(label='Training precision')
+history_df['val_precision'].plot(label='Validation precision')
+plt.grid()
+plt.legend(loc='upper right')
+plt.show()
+# %% [markdown]
 # ### Grabbing the first batch
 
 # %%
@@ -292,18 +318,32 @@ def reverseHot(label_numpy):
         label.append(label2name[i])
     return ' '.join(label)
 
-# %%
-image_idx = 31
-y_hat_probs = ds_model.predict(batch0[0])
-prediction_hot = (y_hat_probs[image_idx] > THRESHOLD).nonzero()[0]
-prediction = reverseHot(prediction_hot)
-print(f'{prediction = }')
-show_image(image_idx, batch0[0], batch0[1])
-
 # %% [markdown]
-# # Exporting Model weights
+# ### Grid plots
 
 # %%
-ds_model.save("current_weights")
+def displayGridItem(idx, X, y, prediction):
+    img = tf.cast(X[idx] * 255, tf.uint8)
+    # print(f"{img = }")
+    indices = tf.where(y[idx] == 1).numpy()
+    label_arr = []
+    for index in indices:
+        label_arr.append(label2name[index[0]])
+    label = ' '.join(label_arr)
+    plt.axis('off')
+    plt.imshow(img)
+    plt.title(prediction + '\n' + label)
+# %%
+fig = plt.figure(figsize=(20, 20))
+rows, columns = 5, 4
+idx_array = np.random.randint(TRAIN_BATCH_SIZE, size=20)
+for iter, image_idx in enumerate(idx_array):
+    y_hat_probs = ds_model.predict(batch0[0])
+    prediction_hot = (y_hat_probs[image_idx] > THRESHOLD).nonzero()[0]
+    prediction = reverseHot(prediction_hot)
+    f = fig.add_subplot(rows, columns, iter + 1)
+    displayGridItem(image_idx, batch0[0], batch0[1], prediction)
 
+plt.show()
 
+# %%
