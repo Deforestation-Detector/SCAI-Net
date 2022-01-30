@@ -12,8 +12,8 @@ from matplotlib import pyplot as plt
 import pandas as pd
 import tensorflow as tf
 from tensorflow import keras as K
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, GlobalAveragePooling2D, Dropout, Input, Dense, Activation, BatchNormalization, Flatten
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Input, Dense, Activation, BatchNormalization, Flatten
+from tensorflow.keras.models import Sequential, load_model
 import math
 from PIL import Image
 from tensorflow.keras.applications import ResNet50V2, Xception
@@ -28,7 +28,7 @@ TEST_BATCH_SIZE = 64
 MODEL_BATCH_SIZE = 32
 KERNEL_SIZE = 3
 IMG_DIMS = 256
-EPOCHS = 5
+EPOCHS = 6
 DATA_PATH = 'data/train-jpg/'
 THRESHOLD = 0.5
 CHECKPOINT_PATH = 'model/'
@@ -45,7 +45,6 @@ train_data = pd.read_csv('data/train_v2.csv')
 
 curr_count = 0
 unique_labels = {}
-multihot = {}
 for line in train_data['tags'].values:
     for label in line.split():
         if label not in unique_labels:
@@ -137,116 +136,62 @@ train_length = math.floor(0.8 * dataset_length)
 train_ds, val_ds = spanning_dataset.take(train_length).batch(TRAIN_BATCH_SIZE), spanning_dataset.skip(train_length).batch(TEST_BATCH_SIZE)
 
 # %% [markdown]
-# # Prepare the model
-# ---
-
-# %% [markdown]
-# ### Model Architecture
-
-# %%
-# ds_model = Sequential()
-
-# ds_model.add(Conv2D(filters = 28,
-#     kernel_size = (KERNEL_SIZE, KERNEL_SIZE),
-#     input_shape = (IMG_DIMS, IMG_DIMS, 3),
-#     activation='relu',
-#     padding = 'Same'))
-# ds_model.add(MaxPooling2D(pool_size = (2, 2)))
-
-# ds_model.add(Conv2D(filters = 28,
-#     kernel_size = (KERNEL_SIZE, KERNEL_SIZE),
-#     activation='relu'))
-# ds_model.add(MaxPooling2D(pool_size = (2, 2)))
-
-# ds_model.add(Conv2D(filters = 28,
-#     kernel_size = (KERNEL_SIZE, KERNEL_SIZE),
-#     activation='relu'))
-# ds_model.add(MaxPooling2D(pool_size = (2, 2)))
-
-# ds_model.add(Flatten())
-
-# ds_model.add(Dense(200, activation = 'relu'))
-# ds_model.add(Dropout(0.2))
-
-# ds_model.add(Dense(100, activation = 'relu'))
-# ds_model.add(Dropout(0.1))
-
-# ds_model.add(Dense(n_labels, activation = 'sigmoid'))
-
-# %% [markdown]
-# ### Save the best model
-# %%
-# if os.path.isdir(CHECKPOINT_PATH) == False:
-#     os.mkdir(CHECKPOINT_PATH)
-
-# val_loss_checkpoint = tf.keras.callbacks.ModelCheckpoint(
-#     filepath=CHECKPOINT_PATH,
-#     monitor='val_loss',
-#     mode='min',
-#     save_best_only=True
-# )
-# %% [markdown]
-# ### Compile the model
-
-# %%
-# opt = K.optimizers.Adam(learning_rate=0.01)
-
-# ds_model.compile(optimizer='adam',
-#     loss = 'binary_crossentropy',
-#     metrics=[tf.keras.metrics.Precision()])
-
-# %% [markdown]
-# # Train model
-# ---
-
-# %%
-# ds_history = ds_model.fit(train_ds,
-#     callbacks = [val_loss_checkpoint],
-#     epochs = EPOCHS,
-#     batch_size = MODEL_BATCH_SIZE,
-#     validation_data = val_ds,
-#     verbose = 1)
-
-# %% [markdown]
 # # Transfer Learning Model
 # ---
 
 # %% [markdown]
 # ### TL Model architecture
 # %%
-base_model = Xception(weights='imagenet', include_top=False, input_shape=(256, 256, 3))
+base_model = ResNet50V2(weights='imagenet', include_top=False, input_shape=(256, 256, 3))
 initializer = tf.keras.initializers.HeNormal()
 
 # for layer in base_model.layers:
 #   layer.trainable = False
 
-xception_model = Sequential()
-xception_model.add(base_model)
-xception_model.add(GlobalAveragePooling2D())
-xception_model.add(BatchNormalization())
+transfer_model = Sequential()
+transfer_model.add(base_model)
+transfer_model.add(GlobalAveragePooling2D())
+transfer_model.add(BatchNormalization())
 
-xception_model.add(Dense(256, kernel_initializer=initializer))
-xception_model.add(BatchNormalization())
-xception_model.add(tf.keras.layers.Activation('relu'))
+transfer_model.add(Dense(256, kernel_initializer=initializer))
+transfer_model.add(BatchNormalization())
+transfer_model.add(tf.keras.layers.Activation('relu'))
 
-xception_model.add(Dense(128, kernel_initializer=initializer))
-xception_model.add(BatchNormalization())
-xception_model.add(tf.keras.layers.Activation('relu'))
+transfer_model.add(Dense(128, kernel_initializer=initializer))
+transfer_model.add(BatchNormalization())
+transfer_model.add(tf.keras.layers.Activation('relu'))
 
-xception_model.add(Dense(n_labels, activation = 'sigmoid'))
+transfer_model.add(Dense(n_labels, activation = 'sigmoid'))
 # %% [markdown]
 # ### Compile TL model
 # %%
-xception_model.compile(
+opt = tf.keras.optimizers.Adam(learning_rate = 1e-4)
+
+transfer_model.compile(
     loss = 'binary_crossentropy',
-    optimizer = 'adam',
+    optimizer = opt,
     metrics = [tf.keras.metrics.Precision()]
+)
+# %% [markdown]
+# ### Save the best model
+
+# %%
+# %%
+if os.path.isdir(CHECKPOINT_PATH) == False:
+    os.mkdir(CHECKPOINT_PATH)
+
+val_loss_checkpoint = tf.keras.callbacks.ModelCheckpoint(
+    filepath=CHECKPOINT_PATH,
+    monitor='val_loss',
+    mode='min',
+    save_best_only=True
 )
 # %% [markdown]
 # ### Fit the model
 # %%
-xception_history = xception_model.fit(train_ds,
+transfer_history = transfer_model.fit(train_ds,
     epochs = EPOCHS,
+    callbacks = [val_loss_checkpoint],
     batch_size = MODEL_BATCH_SIZE,
     validation_data = val_ds,
     verbose = 1)
@@ -258,8 +203,8 @@ xception_history = xception_model.fit(train_ds,
 # ### Store the history in a dataframe
 
 # %%
-xception_history_df = pd.DataFrame(xception_history.history)
-xception_history_df.head(n = 5)
+transfer_history_df = pd.DataFrame(transfer_history.history)
+transfer_history_df.head(n = 5)
 
 # %% [markdown]
 # ### Plotting function
@@ -280,8 +225,14 @@ def plot_history(history_df, y):
 # %% [markdown]
 # ### Plotting loss and precision
 # %%
-plot_history(xception_history_df, ('Loss', 'loss'))
-plot_history(xception_history_df, ('Precision', 'precision_2'))
+plot_history(transfer_history_df, ('Loss', 'loss'))
+plot_history(transfer_history_df, ('Precision', 'precision'))
+# %% [markdown]
+# ### Load the saved model
+
+# %%
+savedModel = tf.keras.models.load_model('model')
+savedModel.summary()
 # %% [markdown]
 # ### Grabbing the first batch
 
@@ -339,6 +290,39 @@ def eyeTestPredictions(model):
 
     plt.show()
 
+# %% [markdown]
+# ### Eye test the transfer network
+
 # %%
-eyeTestPredictions(xception_model)
+print("Transfer model eyetest")
+eyeTestPredictions(transfer_model)
+
+# %% [markdown]
+# ### Eye test the saved network
+
 # %%
+eyeTestPredictions(savedModel)
+# %% [markdown]
+# ### Evaluate the networks
+
+# %%
+def evalModels(models, dataset):
+    precisions = {}
+    for model_name, model in models:
+        print(f"evaluating {model_name}: ")
+        _, model_precision = model.evaluate(dataset)
+        precisions[model_name] = model_precision
+    
+    return precisions
+# %% [markdown]
+# ### Define the models array and evaluate them
+
+# %%
+models = [
+    ('Saved', savedModel),
+    ('Transfer', transfer_model)
+]
+precisions = evalModels(models, val_ds)
+
+for model_name in precisions:
+    print(f"{model_name}'s precision is {precisions[model_name]:.6f}")
