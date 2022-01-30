@@ -15,6 +15,7 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, GlobalAveragePooling2D
 from tensorflow.keras.models import Sequential, Model
 import math
 from PIL import Image
+from tensorflow.keras.applications import ResNet50V2
 
 # %% [markdown]
 # # Defining Constants
@@ -25,7 +26,7 @@ TEST_BATCH_SIZE = 64
 MODEL_BATCH_SIZE = 32
 KERNEL_SIZE = 3
 IMG_DIMS = 256
-EPOCHS = 10
+EPOCHS = 8
 DATA_PATH = 'data/train-jpg/'
 THRESHOLD = 0.5
 CHECKPOINT_PATH = 'model/'
@@ -166,29 +167,6 @@ show_image(24, batch[0], batch[1])
 # ---
 
 # %% [markdown]
-# ### Define evaluation function
-
-# %%
-def macro_f1(y, y_hat):
-    """Compute the macro F1-score on a batch of observations (average F1 across labels)
-    
-    Args:
-        y (int32 Tensor): labels array of shape (BATCH_SIZE, N_LABELS)
-        y_hat (float32 Tensor): probability matrix from forward propagation of shape (BATCH_SIZE, N_LABELS)
-        thresh: probability value above which we predict positive
-        
-    Returns:
-        macro_f1 (scalar Tensor): value of macro F1 for the batch
-    """
-    y_pred = tf.cast(tf.greater(y_hat, THRESHOLD), tf.float32)
-    tp = tf.cast(tf.math.count_nonzero(y_pred * y, axis=0), tf.float32)
-    fp = tf.cast(tf.math.count_nonzero(y_pred * (1 - y), axis=0), tf.float32)
-    fn = tf.cast(tf.math.count_nonzero((1 - y_pred) * y, axis=0), tf.float32)
-    f1 = 2*tp / (2*tp + fn + fp + 1e-16)
-    macro_f1 = tf.reduce_mean(f1)
-    return macro_f1
-
-# %% [markdown]
 # ### Model Architecture
 
 # %%
@@ -256,6 +234,49 @@ ds_history = ds_model.fit(train_ds,
     verbose = 1)
 
 # %% [markdown]
+# # Transfer Learning Model
+# ---
+
+# %% [markdown]
+# ### TL Model architecture
+# %%
+base_model = ResNet50V2(weights='imagenet', include_top=False, input_shape=(256, 256, 3))
+initializer = tf.keras.initializers.HeNormal()
+
+# for layer in base_model.layers:
+#   layer.trainable = False
+
+resnet_model = Sequential()
+resnet_model.add(base_model)
+resnet_model.add(GlobalAveragePooling2D())
+resnet_model.add(BatchNormalization())
+
+resnet_model.add(Dense(256, kernel_initializer=initializer))
+resnet_model.add(BatchNormalization())
+resnet_model.add(tf.keras.layers.Activation('relu'))
+
+resnet_model.add(Dense(128, kernel_initializer=initializer))
+resnet_model.add(BatchNormalization())
+resnet_model.add(tf.keras.layers.Activation('relu'))
+
+resnet_model.add(Dense(n_labels, activation = 'sigmoid'))
+# %% [markdown]
+# ### Compile TL model
+# %%
+resnet_model.compile(
+    loss = 'binary_crossentropy',
+    optimizer = 'adam',
+    metrics = [tf.keras.metrics.Precision()]
+)
+# %% [markdown]
+# ### Fit the model
+# %%
+resnet_history = resnet_model.fit(train_ds,
+    epochs = EPOCHS,
+    batch_size = MODEL_BATCH_SIZE,
+    validation_data = val_ds,
+    verbose = 1)
+# %% [markdown]
 # # View results
 # ---
 
@@ -297,7 +318,7 @@ plt.show()
 
 # %%
 batch0 = None
-for batch in train_ds:
+for batch in val_ds:
     batch0 = batch
     break
 
@@ -338,7 +359,7 @@ fig = plt.figure(figsize=(20, 20))
 rows, columns = 5, 4
 idx_array = np.random.randint(TRAIN_BATCH_SIZE, size=20)
 for iter, image_idx in enumerate(idx_array):
-    y_hat_probs = ds_model.predict(batch0[0])
+    y_hat_probs = resnet_model.predict(batch0[0])
     prediction_hot = (y_hat_probs[image_idx] > THRESHOLD).nonzero()[0]
     prediction = reverseHot(prediction_hot)
     f = fig.add_subplot(rows, columns, iter + 1)
