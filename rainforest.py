@@ -3,6 +3,7 @@
 
 # %% [markdown]
 # # Import Necessary Libraries
+# ---
 
 # %%
 import os
@@ -12,13 +13,14 @@ import pandas as pd
 import tensorflow as tf
 from tensorflow import keras as K
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, GlobalAveragePooling2D, Dropout, Input, Dense, Activation, BatchNormalization, Flatten
-from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.models import Sequential
 import math
 from PIL import Image
-from tensorflow.keras.applications import ResNet50V2
+from tensorflow.keras.applications import ResNet50V2, Xception
 
 # %% [markdown]
 # # Defining Constants
+# ---
 
 # %%
 TRAIN_BATCH_SIZE = 32
@@ -26,7 +28,7 @@ TEST_BATCH_SIZE = 64
 MODEL_BATCH_SIZE = 32
 KERNEL_SIZE = 3
 IMG_DIMS = 256
-EPOCHS = 3
+EPOCHS = 5
 DATA_PATH = 'data/train-jpg/'
 THRESHOLD = 0.5
 CHECKPOINT_PATH = 'model/'
@@ -68,7 +70,7 @@ print(label2name)
 # ### View Head of dataset
 
 # %%
-train_data.head(n = 11)
+train_data.head(n = 5)
 
 # %% [markdown]
 # ### Auxiliary Function for multi-hotting
@@ -99,7 +101,7 @@ def readImage(filename_tensor, resize = [IMG_DIMS, IMG_DIMS]):
     return img
 
 # %% [markdown]
-# ### Function to grab the label from the filename
+# ### Mapping to observe image and label from symbolic tensor
 
 # %%
 def symbolicRealMapping(filename_tensor, label_tensor):
@@ -138,31 +140,6 @@ train_length = math.floor(0.8 * dataset_length)
 train_ds, val_ds = spanning_dataset.take(train_length).batch(TRAIN_BATCH_SIZE), spanning_dataset.skip(train_length).batch(TEST_BATCH_SIZE)
 
 # %% [markdown]
-# ### Display a target image
-
-# %%
-def show_image(idx, X, y):
-    img = tf.cast(X[idx] * 255, tf.uint8)
-    # print(f"{img = }")
-    indices = tf.where(y[idx] == 1).numpy()
-    label_arr = []
-    for index in indices:
-        label_arr.append(label2name[index[0]])
-    label = ' '.join(label_arr)
-    plt.imshow(img)
-    plt.title(label)
-    plt.show()
-
-# %%
-batch = None
-
-for e in train_ds:
-    batch = e
-    break
-
-show_image(24, batch[0], batch[1])
-
-# %% [markdown]
 # # Prepare the model
 # ---
 
@@ -170,68 +147,68 @@ show_image(24, batch[0], batch[1])
 # ### Model Architecture
 
 # %%
-ds_model = Sequential()
+# ds_model = Sequential()
 
-ds_model.add(Conv2D(filters = 28,
-    kernel_size = (KERNEL_SIZE, KERNEL_SIZE),
-    input_shape = (IMG_DIMS, IMG_DIMS, 3),
-    activation='relu',
-    padding = 'Same'))
-ds_model.add(MaxPooling2D(pool_size = (2, 2)))
+# ds_model.add(Conv2D(filters = 28,
+#     kernel_size = (KERNEL_SIZE, KERNEL_SIZE),
+#     input_shape = (IMG_DIMS, IMG_DIMS, 3),
+#     activation='relu',
+#     padding = 'Same'))
+# ds_model.add(MaxPooling2D(pool_size = (2, 2)))
 
-ds_model.add(Conv2D(filters = 28,
-    kernel_size = (KERNEL_SIZE, KERNEL_SIZE),
-    activation='relu'))
-ds_model.add(MaxPooling2D(pool_size = (2, 2)))
+# ds_model.add(Conv2D(filters = 28,
+#     kernel_size = (KERNEL_SIZE, KERNEL_SIZE),
+#     activation='relu'))
+# ds_model.add(MaxPooling2D(pool_size = (2, 2)))
 
-ds_model.add(Conv2D(filters = 28,
-    kernel_size = (KERNEL_SIZE, KERNEL_SIZE),
-    activation='relu'))
-ds_model.add(MaxPooling2D(pool_size = (2, 2)))
+# ds_model.add(Conv2D(filters = 28,
+#     kernel_size = (KERNEL_SIZE, KERNEL_SIZE),
+#     activation='relu'))
+# ds_model.add(MaxPooling2D(pool_size = (2, 2)))
 
-ds_model.add(Flatten())
+# ds_model.add(Flatten())
 
-ds_model.add(Dense(200, activation = 'relu'))
-ds_model.add(Dropout(0.2))
+# ds_model.add(Dense(200, activation = 'relu'))
+# ds_model.add(Dropout(0.2))
 
-ds_model.add(Dense(100, activation = 'relu'))
-ds_model.add(Dropout(0.1))
+# ds_model.add(Dense(100, activation = 'relu'))
+# ds_model.add(Dropout(0.1))
 
-ds_model.add(Dense(n_labels, activation = 'sigmoid'))
+# ds_model.add(Dense(n_labels, activation = 'sigmoid'))
 
 # %% [markdown]
 # ### Save the best model
 # %%
-if os.path.isdir(CHECKPOINT_PATH) == False:
-    os.mkdir(CHECKPOINT_PATH)
+# if os.path.isdir(CHECKPOINT_PATH) == False:
+#     os.mkdir(CHECKPOINT_PATH)
 
-val_loss_checkpoint = tf.keras.callbacks.ModelCheckpoint(
-    filepath=CHECKPOINT_PATH,
-    monitor='val_loss',
-    mode='min',
-    save_best_only=True
-)
+# val_loss_checkpoint = tf.keras.callbacks.ModelCheckpoint(
+#     filepath=CHECKPOINT_PATH,
+#     monitor='val_loss',
+#     mode='min',
+#     save_best_only=True
+# )
 # %% [markdown]
 # ### Compile the model
 
 # %%
-opt = K.optimizers.Adam(learning_rate=0.01)
+# opt = K.optimizers.Adam(learning_rate=0.01)
 
-ds_model.compile(optimizer='adam',
-    loss = 'binary_crossentropy',
-    metrics=[tf.keras.metrics.Precision()])
+# ds_model.compile(optimizer='adam',
+#     loss = 'binary_crossentropy',
+#     metrics=[tf.keras.metrics.Precision()])
 
 # %% [markdown]
 # # Train model
 # ---
 
 # %%
-ds_history = ds_model.fit(train_ds,
-    callbacks = [val_loss_checkpoint],
-    epochs = EPOCHS,
-    batch_size = MODEL_BATCH_SIZE,
-    validation_data = val_ds,
-    verbose = 1)
+# ds_history = ds_model.fit(train_ds,
+#     callbacks = [val_loss_checkpoint],
+#     epochs = EPOCHS,
+#     batch_size = MODEL_BATCH_SIZE,
+#     validation_data = val_ds,
+#     verbose = 1)
 
 # %% [markdown]
 # # Transfer Learning Model
@@ -240,30 +217,30 @@ ds_history = ds_model.fit(train_ds,
 # %% [markdown]
 # ### TL Model architecture
 # %%
-base_model = ResNet50V2(weights='imagenet', include_top=False, input_shape=(256, 256, 3))
+base_model = Xception(weights='imagenet', include_top=False, input_shape=(256, 256, 3))
 initializer = tf.keras.initializers.HeNormal()
 
-for layer in base_model.layers:
-  layer.trainable = False
+# for layer in base_model.layers:
+#   layer.trainable = False
 
-resnet_model = Sequential()
-resnet_model.add(base_model)
-resnet_model.add(GlobalAveragePooling2D())
-resnet_model.add(BatchNormalization())
+xception_model = Sequential()
+xception_model.add(base_model)
+xception_model.add(GlobalAveragePooling2D())
+xception_model.add(BatchNormalization())
 
-resnet_model.add(Dense(256, kernel_initializer=initializer))
-resnet_model.add(BatchNormalization())
-resnet_model.add(tf.keras.layers.Activation('relu'))
+xception_model.add(Dense(256, kernel_initializer=initializer))
+xception_model.add(BatchNormalization())
+xception_model.add(tf.keras.layers.Activation('relu'))
 
-resnet_model.add(Dense(128, kernel_initializer=initializer))
-resnet_model.add(BatchNormalization())
-resnet_model.add(tf.keras.layers.Activation('relu'))
+xception_model.add(Dense(128, kernel_initializer=initializer))
+xception_model.add(BatchNormalization())
+xception_model.add(tf.keras.layers.Activation('relu'))
 
-resnet_model.add(Dense(n_labels, activation = 'sigmoid'))
+xception_model.add(Dense(n_labels, activation = 'sigmoid'))
 # %% [markdown]
 # ### Compile TL model
 # %%
-resnet_model.compile(
+xception_model.compile(
     loss = 'binary_crossentropy',
     optimizer = 'adam',
     metrics = [tf.keras.metrics.Precision()]
@@ -271,7 +248,7 @@ resnet_model.compile(
 # %% [markdown]
 # ### Fit the model
 # %%
-resnet_history = resnet_model.fit(train_ds,
+xception_history = xception_model.fit(train_ds,
     epochs = EPOCHS,
     batch_size = MODEL_BATCH_SIZE,
     validation_data = val_ds,
@@ -284,41 +261,36 @@ resnet_history = resnet_model.fit(train_ds,
 # ### Store the history in a dataframe
 
 # %%
-history_df = pd.DataFrame(ds_history.history)
-history_df
+xception_history_df = pd.DataFrame(xception_history.history)
+xception_history_df.head(n = 5)
 
 # %% [markdown]
-# ### Plotting the loss
+# ### Plotting function
 
 # %%
-plt.figure(figsize=(10,8))
-plt.title("Loss over time")
-plt.xlabel('Epochs')
-plt.ylabel('Loss')
-history_df['loss'].plot(label='Training Loss')
-history_df['val_loss'].plot(label='Validation loss')
-plt.grid()
-plt.legend(loc='upper right')
-plt.show()
+def plot_history(history_df, y):
+    plt.figure(figsize=(10,8))
+
+    plt.title(f"{y[0]} over time")
+    plt.xlabel('Epochs')
+    plt.ylabel(f'{y[0]}')
+    history_df[y[1]].plot(label=f'Training {y[0]}')
+    history_df['val_' + y[1]].plot(label=f'Validation {y[0]}')
+    plt.grid()
+    plt.legend(loc='upper right')
+    plt.show()
 
 # %% [markdown]
-# ### Plotting the precision
+# ### Plotting loss and precision
 # %%
-plt.figure(figsize=(10, 8))
-plt.title('Precision over time')
-plt.xlabel('Epochs')
-plt.ylabel('Precision')
-history_df['precision'].plot(label='Training precision')
-history_df['val_precision'].plot(label='Validation precision')
-plt.grid()
-plt.legend(loc='upper right')
-plt.show()
+plot_history(xception_history_df, ('Loss', 'loss'))
+plot_history(xception_history_df, ('Precision', 'precision_2'))
 # %% [markdown]
 # ### Grabbing the first batch
 
 # %%
 batch0 = None
-for batch in train_ds:
+for batch in val_ds:
     batch0 = batch
     break
 
@@ -340,7 +312,7 @@ def reverseHot(label_numpy):
     return ' '.join(label)
 
 # %% [markdown]
-# ### Grid plots
+# ### Function to plot grid element with corresponding prediction and label
 
 # %%
 def displayGridItem(idx, X, y, prediction):
@@ -354,17 +326,22 @@ def displayGridItem(idx, X, y, prediction):
     plt.axis('off')
     plt.imshow(img)
     plt.title(prediction + '\n' + label)
+# %% [markdown]
+# ### Function to make predictions on random images from batch 1
 # %%
-fig = plt.figure(figsize=(20, 20))
-rows, columns = 5, 4
-idx_array = np.random.randint(TRAIN_BATCH_SIZE, size=20)
-for iter, image_idx in enumerate(idx_array):
-    y_hat_probs = resnet_model.predict(batch0[0])
-    prediction_hot = (y_hat_probs[image_idx] > THRESHOLD).nonzero()[0]
-    prediction = reverseHot(prediction_hot)
-    f = fig.add_subplot(rows, columns, iter + 1)
-    displayGridItem(image_idx, batch0[0], batch0[1], prediction)
+def eyeTestPredictions(model):
+    fig = plt.figure(figsize=(20, 20))
+    rows, columns = 5, 4
+    idx_array = np.random.randint(TRAIN_BATCH_SIZE, size=20)
+    for iter, image_idx in enumerate(idx_array):
+        y_hat_probs = model.predict(batch0[0])
+        prediction_hot = (y_hat_probs[image_idx] > THRESHOLD).nonzero()[0]
+        prediction = reverseHot(prediction_hot)
+        f = fig.add_subplot(rows, columns, iter + 1)
+        displayGridItem(image_idx, batch0[0], batch0[1], prediction)
 
-plt.show()
+    plt.show()
 
+# %%
+eyeTestPredictions(xception_model)
 # %%
