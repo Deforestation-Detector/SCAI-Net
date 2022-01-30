@@ -26,7 +26,7 @@ TEST_BATCH_SIZE = 64
 MODEL_BATCH_SIZE = 32
 KERNEL_SIZE = 3
 IMG_DIMS = 256
-EPOCHS = 8
+EPOCHS = 3
 DATA_PATH = 'data/train-jpg/'
 THRESHOLD = 0.5
 CHECKPOINT_PATH = 'model/'
@@ -243,8 +243,8 @@ ds_history = ds_model.fit(train_ds,
 base_model = ResNet50V2(weights='imagenet', include_top=False, input_shape=(256, 256, 3))
 initializer = tf.keras.initializers.HeNormal()
 
-# for layer in base_model.layers:
-#   layer.trainable = False
+for layer in base_model.layers:
+  layer.trainable = False
 
 resnet_model = Sequential()
 resnet_model.add(base_model)
@@ -318,7 +318,7 @@ plt.show()
 
 # %%
 batch0 = None
-for batch in val_ds:
+for batch in train_ds:
     batch0 = batch
     break
 
