@@ -12,11 +12,12 @@ from matplotlib import pyplot as plt
 import pandas as pd
 import tensorflow as tf
 from tensorflow import keras as K
+import tensorflow.keras.backend as Kb
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Input, Dense, Activation, BatchNormalization, Flatten
 from tensorflow.keras.models import Sequential, load_model
 import math
 from PIL import Image
-from tensorflow.keras.applications import ResNet50V2, Xception
+from tensorflow.keras.applications import ResNet50V2, Xception, VGG16
 
 # %% [markdown]
 # # Defining Constants
@@ -28,10 +29,11 @@ TEST_BATCH_SIZE = 64
 MODEL_BATCH_SIZE = 32
 KERNEL_SIZE = 3
 IMG_DIMS = 256
-EPOCHS = 6
+EPOCHS = 3
 DATA_PATH = 'data/train-jpg/'
 THRESHOLD = 0.5
-CHECKPOINT_PATH = 'model/'
+CHECKPOINT_PATH = 'checkpoints/'
+ARCH = 'ResNet50/'
 
 # %% [markdown]
 # # Preprocess data
@@ -140,38 +142,83 @@ train_ds, val_ds = spanning_dataset.take(train_length).batch(TRAIN_BATCH_SIZE), 
 # ---
 
 # %% [markdown]
+# ### Function for compiling model
+# %%
+def compile_model(model):
+    opt = tf.keras.optimizers.Adadelta(learing_rate=1e-3)
+    model.compile(
+        loss = 'binary_crossentropy',
+        optimizer = opt,
+        metrics = [tf.keras.metrics.Precision()]
+    )
+# %% [markdown]
+# ### Defining the metric function
+def f1(y_true, y_pred):
+    y_pred = Kb.round(y_pred)
+    tp = Kb.sum(Kb.cast(y_true*y_pred, 'float'), axis=0)
+    tn = Kb.sum(Kb.cast((1-y_true)*(1-y_pred), 'float'), axis=0)
+    fp = Kb.sum(Kb.cast((1-y_true)*y_pred, 'float'), axis=0)
+    fn = Kb.sum(Kb.cast(y_true*(1-y_pred), 'float'), axis=0)
+
+    p = tp / (tp + fp + Kb.epsilon())
+    r = tp / (tp + fn + Kb.epsilon())
+
+    f1 = 2*p*r / (p+r+Kb.epsilon())
+    f1 = tf.where(tf.math.is_nan(f1), tf.zeros_like(f1), f1)
+    return Kb.mean(f1)
+# %% [markdown]
+# ### Defining the loss function
+
+# %%
+def f1_loss(y_true, y_pred):
+    
+    tp = Kb.sum(Kb.cast(y_true*y_pred, 'float'), axis=0)
+    tn = Kb.sum(Kb.cast((1-y_true)*(1-y_pred), 'float'), axis=0)
+    fp = Kb.sum(Kb.cast((1-y_true)*y_pred, 'float'), axis=0)
+    fn = Kb.sum(Kb.cast(y_true*(1-y_pred), 'float'), axis=0)
+
+    p = tp / (tp + fp + Kb.epsilon())
+    r = tp / (tp + fn + Kb.epsilon())
+
+    f1 = 2*p*r / (p+r+Kb.epsilon())
+    f1 = tf.where(tf.math.is_nan(f1), tf.zeros_like(f1), f1)
+    return 1 - Kb.mean(f1)
+# %% [markdown]
 # ### TL Model architecture
 # %%
-base_model = ResNet50V2(weights='imagenet', include_top=False, input_shape=(256, 256, 3))
-initializer = tf.keras.initializers.HeNormal()
+def create_model():
+    # base_model = Xception(weights='imagenet', include_top=False, input_shape=(256, 256, 3))
+    base_model = ResNet50V2(weights='imagenet', include_top=False, input_shape=(256, 256, 3))
+    # base_model = VGG16(weights='imagenet', include_top=False, input_shape=(256, 256, 3))
+    initializer = tf.keras.initializers.HeNormal()
 
-# for layer in base_model.layers:
-#   layer.trainable = False
+    # for layer in base_model.layers:
+    #   layer.trainable = False
 
-transfer_model = Sequential()
-transfer_model.add(base_model)
-transfer_model.add(GlobalAveragePooling2D())
-transfer_model.add(BatchNormalization())
+    transfer_model = Sequential()
+    transfer_model.add(base_model)
+    transfer_model.add(GlobalAveragePooling2D())
+    transfer_model.add(BatchNormalization())
 
-transfer_model.add(Dense(256, kernel_initializer=initializer))
-transfer_model.add(BatchNormalization())
-transfer_model.add(tf.keras.layers.Activation('relu'))
+    transfer_model.add(Dense(256, kernel_initializer=initializer))
+    transfer_model.add(BatchNormalization())
+    transfer_model.add(tf.keras.layers.Activation('relu'))
 
-transfer_model.add(Dense(128, kernel_initializer=initializer))
-transfer_model.add(BatchNormalization())
-transfer_model.add(tf.keras.layers.Activation('relu'))
+    transfer_model.add(Dense(128, kernel_initializer=initializer))
+    transfer_model.add(BatchNormalization())
+    transfer_model.add(tf.keras.layers.Activation('relu'))
 
-transfer_model.add(Dense(n_labels, activation = 'sigmoid'))
+    transfer_model.add(Dense(n_labels, activation = 'sigmoid'))
+
+    return transfer_model
+# %% [markdown]
+# ### Create the model
+# %%
+transfer_model = create_model()
 # %% [markdown]
 # ### Compile TL model
 # %%
-opt = tf.keras.optimizers.Adam(learning_rate = 1e-4)
-
-transfer_model.compile(
-    loss = 'binary_crossentropy',
-    optimizer = opt,
-    metrics = [tf.keras.metrics.Precision()]
-)
+compile_model(transfer_model)
 # %% [markdown]
 # ### Save the best model
 
@@ -181,10 +228,11 @@ if os.path.isdir(CHECKPOINT_PATH) == False:
     os.mkdir(CHECKPOINT_PATH)
 
 val_loss_checkpoint = tf.keras.callbacks.ModelCheckpoint(
-    filepath=CHECKPOINT_PATH,
+    filepath=CHECKPOINT_PATH + ARCH,
     monitor='val_loss',
     mode='min',
-    save_best_only=True
+    save_best_only=True,
+    save_weights_only=True,
 )
 # %% [markdown]
 # ### Fit the model
@@ -231,8 +279,8 @@ plot_history(transfer_history_df, ('Precision', 'precision'))
 # ### Load the saved model
 
 # %%
-savedModel = tf.keras.models.load_model('model')
-savedModel.summary()
+saved_model = create_model()
+saved_model.load_weights('checkpoints/ResNet50')
 # %% [markdown]
 # ### Grabbing the first batch
 
@@ -301,7 +349,7 @@ eyeTestPredictions(transfer_model)
 # ### Eye test the saved network
 
 # %%
-eyeTestPredictions(savedModel)
+eyeTestPredictions(saved_model)
 # %% [markdown]
 # ### Evaluate the networks
 
@@ -319,10 +367,26 @@ def evalModels(models, dataset):
 
 # %%
 models = [
-    ('Saved', savedModel),
+    ('Saved', saved_model),
     ('Transfer', transfer_model)
 ]
 precisions = evalModels(models, val_ds)
 
 for model_name in precisions:
     print(f"{model_name}'s precision is {precisions[model_name]:.6f}")
+# %% [markdown]
+# ### Confusion Matrix
+# %%
+def confusionMatrices(models, dataset):
+    precisions = {}
+    for model_name, model in models:
+        print(f"evaluating {model_name}: ")
+        y_hat = model.predict(dataset)
+        
+    
+    return precisions
+# %%
+test = tf.concat([labels for _, labels in val_ds], axis = 0)
+test
+# %%
+len(test)
