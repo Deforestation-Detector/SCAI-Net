@@ -145,7 +145,7 @@ train_ds, val_ds = spanning_dataset.take(train_length).batch(TRAIN_BATCH_SIZE), 
 # ### Function for compiling model
 # %%
 def compile_model(model):
-    opt = tf.keras.optimizers.Adadelta(learing_rate=1e-3)
+    opt = tf.keras.optimizers.Adam()
     model.compile(
         loss = 'binary_crossentropy',
         optimizer = opt,
@@ -274,7 +274,7 @@ def plot_history(history_df, y):
 # ### Plotting loss and precision
 # %%
 plot_history(transfer_history_df, ('Loss', 'loss'))
-plot_history(transfer_history_df, ('Precision', 'precision'))
+plot_history(transfer_history_df, ('Precision', 'precision_1'))
 # %% [markdown]
 # ### Load the saved model
 
