@@ -7,6 +7,7 @@
 
 # %%
 import os
+from re import I
 import numpy as np
 from matplotlib import pyplot as plt
 import pandas as pd
@@ -18,6 +19,8 @@ from tensorflow.keras.models import Sequential, load_model
 import math
 from PIL import Image
 from tensorflow.keras.applications import ResNet50V2, Xception, VGG16
+from sklearn.metrics import multilabel_confusion_matrix, plot_confusion_matrix
+import seaborn as sns
 
 # %% [markdown]
 # # Defining Constants
@@ -274,13 +277,14 @@ def plot_history(history_df, y):
 # ### Plotting loss and precision
 # %%
 plot_history(transfer_history_df, ('Loss', 'loss'))
-plot_history(transfer_history_df, ('Precision', 'precision_1'))
+plot_history(transfer_history_df, ('Precision', 'precision'))
 # %% [markdown]
 # ### Load the saved model
 
 # %%
 saved_model = create_model()
-saved_model.load_weights('checkpoints/ResNet50')
+saved_model.load_weights(CHECKPOINT_PATH + ARCH)
+compile_model(saved_model)
 # %% [markdown]
 # ### Grabbing the first batch
 
@@ -378,15 +382,42 @@ for model_name in precisions:
 # ### Confusion Matrix
 # %%
 def confusionMatrices(models, dataset):
-    precisions = {}
+    confusion_matrices = {}
+    features, labels = dataset
+
     for model_name, model in models:
-        print(f"evaluating {model_name}: ")
-        y_hat = model.predict(dataset)
-        
+        # for batch in dataset:
+        #     prob_densities = model.predict(batch).numpy()
+        #     y_hat = tf.convert_to_tensor(np.where(prob_densities < 0.5, 0, 1))
+        #     _, labels = batch
+        #     confusion_matrix = tf.math.conf
+        #     confusion_matrix = tf.math.confusion_matrix(labels, y_hat)
+        #     confusion_matrix = tf.concat((confusion_matrix, [labels]), axis = 0)
+        #     break
+        prob_densities = model.predict(features)
+        y_hat = tf.convert_to_tensor(np.where(prob_densities < 0.5, 0., 1.))
+        confuse_matrix = multilabel_confusion_matrix(labels, y_hat)
+        confusion_matrices[model_name] = confuse_matrix       
     
-    return precisions
+    return confusion_matrices
+# %% [markdown]
+# ### Determine the confusion
 # %%
-test = tf.concat([labels for _, labels in val_ds], axis = 0)
-test
+confusion_matrices = confusionMatrices(models, batch0)
+# %% [markdown]
+# ### Function to plot confusion matrices
 # %%
-len(test)
+def plotConfusionMatrices(confusion_matrices):
+    sqt = math.sqrt(n_labels)
+    rows, columns = math.ceil(sqt), math.floor(sqt)
+    fig = plt.figure(figsize=(20, 20))
+
+    for i in range(n_labels):
+        fig.add_subplot(rows, columns, i + 1)
+        f = sns.heatmap(confusion_matrices['Transfer'][i], annot=True, fmt='d')
+# %% [markdown]
+# ### Plot the confusion matrices
+# %%
+plotConfusionMatrices(confusion_matrices)
+# %%
+confusion_matrices['Transfer'][0].shape
