@@ -7,19 +7,17 @@
 
 # %%
 import os
-from re import I
 import numpy as np
 from matplotlib import pyplot as plt
 import pandas as pd
 import tensorflow as tf
-from tensorflow import keras as K
 import tensorflow.keras.backend as Kb
-from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Input, Dense, Activation, BatchNormalization, Flatten
+from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Input, Dense, BatchNormalization, Activation
 from tensorflow.keras.models import Sequential, load_model
 import math
 from PIL import Image
 from tensorflow.keras.applications import ResNet50V2, Xception, VGG16
-from sklearn.metrics import multilabel_confusion_matrix, plot_confusion_matrix
+from sklearn.metrics import multilabel_confusion_matrix
 import seaborn as sns
 
 # %% [markdown]
@@ -32,7 +30,7 @@ TEST_BATCH_SIZE = 64
 MODEL_BATCH_SIZE = 32
 KERNEL_SIZE = 3
 IMG_DIMS = 256
-EPOCHS = 3
+EPOCHS = 4
 DATA_PATH = 'data/train-jpg/'
 THRESHOLD = 0.5
 CHECKPOINT_PATH = 'checkpoints/'
@@ -148,7 +146,7 @@ train_ds, val_ds = spanning_dataset.take(train_length).batch(TRAIN_BATCH_SIZE), 
 # ### Function for compiling model
 # %%
 def compile_model(model):
-    opt = tf.keras.optimizers.Adam()
+    opt = tf.keras.optimizers.Adam(learning_rate=1e-4)
     model.compile(
         loss = 'binary_crossentropy',
         optimizer = opt,
@@ -209,9 +207,9 @@ def create_model():
 
     transfer_model.add(Dense(128, kernel_initializer=initializer))
     transfer_model.add(BatchNormalization())
-    transfer_model.add(tf.keras.layers.Activation('relu'))
+    transfer_model.add(Activation('relu'))
 
-    transfer_model.add(Dense(n_labels, activation = 'sigmoid'))
+    transfer_model.add(Dense(n_labels, activation = Activation('sigmoid')))
 
     return transfer_model
 # %% [markdown]
@@ -225,7 +223,6 @@ compile_model(transfer_model)
 # %% [markdown]
 # ### Save the best model
 
-# %%
 # %%
 if os.path.isdir(CHECKPOINT_PATH) == False:
     os.mkdir(CHECKPOINT_PATH)
@@ -414,6 +411,7 @@ def plotConfusionMatrices(confusion_matrices):
 
     for i in range(n_labels):
         fig.add_subplot(rows, columns, i + 1)
+        plt.title(f'{label2name[i]}')
         sns.heatmap(
             confusion_matrices['Transfer'][i],
             annot=True,
@@ -423,5 +421,3 @@ def plotConfusionMatrices(confusion_matrices):
 # ### Plot the confusion matrices
 # %%
 plotConfusionMatrices(confusion_matrices)
-# %%
-confusion_matrices['Transfer'][0].shape
