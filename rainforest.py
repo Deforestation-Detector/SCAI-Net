@@ -66,7 +66,7 @@ for k, v in unique_labels.items():
     mapping[k] = tf.constant(mapping[k])
 
 
-label2name = {v: k for k, v in unique_labels.items()}
+label2name = [k for k in unique_labels]
 
 print(label2name)
 
@@ -414,7 +414,11 @@ def plotConfusionMatrices(confusion_matrices):
 
     for i in range(n_labels):
         fig.add_subplot(rows, columns, i + 1)
-        f = sns.heatmap(confusion_matrices['Transfer'][i], annot=True, fmt='d')
+        sns.heatmap(
+            confusion_matrices['Transfer'][i],
+            annot=True,
+            fmt='d',
+        )
 # %% [markdown]
 # ### Plot the confusion matrices
 # %%
