@@ -30,11 +30,11 @@ TEST_BATCH_SIZE = 64
 MODEL_BATCH_SIZE = 32
 KERNEL_SIZE = 3
 IMG_DIMS = 256
-EPOCHS = 4
+EPOCHS = 5
 DATA_PATH = 'data/train-jpg/'
 THRESHOLD = 0.5
 CHECKPOINT_PATH = 'checkpoints/'
-ARCH = 'ResNet50/'
+ARCH = 'VGG16/'
 
 # %% [markdown]
 # # Preprocess data
@@ -143,16 +143,6 @@ train_ds, val_ds = spanning_dataset.take(train_length).batch(TRAIN_BATCH_SIZE), 
 # ---
 
 # %% [markdown]
-# ### Function for compiling model
-# %%
-def compile_model(model):
-    opt = tf.keras.optimizers.Adam(learning_rate=1e-4)
-    model.compile(
-        loss = 'binary_crossentropy',
-        optimizer = opt,
-        metrics = [tf.keras.metrics.Precision()]
-    )
-# %% [markdown]
 # ### Defining the metric function
 def f1(y_true, y_pred):
     y_pred = Kb.round(y_pred)
@@ -185,11 +175,22 @@ def f1_loss(y_true, y_pred):
     f1 = tf.where(tf.math.is_nan(f1), tf.zeros_like(f1), f1)
     return 1 - Kb.mean(f1)
 # %% [markdown]
+# ### Function for compiling model
+# %%
+def compile_model(model):
+    opt = tf.keras.optimizers.Adam(learning_rate=1e-4)
+
+    model.compile(
+        loss = tf.keras.losses.BinaryCrossentropy(),
+        optimizer = opt,
+        metrics = [tf.keras.metrics.Precision()]
+    )
+# %% [markdown]
 # ### TL Model architecture
 # %%
 def create_model():
     # base_model = Xception(weights='imagenet', include_top=False, input_shape=(256, 256, 3))
-    base_model = ResNet50V2(weights='imagenet', include_top=False, input_shape=(256, 256, 3))
+    base_model = VGG16(weights='imagenet', include_top=False, input_shape=(256, 256, 3))
     # base_model = VGG16(weights='imagenet', include_top=False, input_shape=(256, 256, 3))
     initializer = tf.keras.initializers.HeNormal()
 
@@ -203,7 +204,7 @@ def create_model():
 
     transfer_model.add(Dense(256, kernel_initializer=initializer))
     transfer_model.add(BatchNormalization())
-    transfer_model.add(tf.keras.layers.Activation('relu'))
+    transfer_model.add(Activation('relu'))
 
     transfer_model.add(Dense(128, kernel_initializer=initializer))
     transfer_model.add(BatchNormalization())
@@ -380,7 +381,7 @@ for model_name in precisions:
 # %%
 def confusionMatrices(models, dataset):
     confusion_matrices = {}
-    features, labels = dataset
+    _, labels = dataset
 
     for model_name, model in models:
         # for batch in dataset:
@@ -391,7 +392,7 @@ def confusionMatrices(models, dataset):
         #     confusion_matrix = tf.math.confusion_matrix(labels, y_hat)
         #     confusion_matrix = tf.concat((confusion_matrix, [labels]), axis = 0)
         #     break
-        prob_densities = model.predict(features)
+        prob_densities = model.predict(dataset)
         y_hat = tf.convert_to_tensor(np.where(prob_densities < 0.5, 0., 1.))
         confuse_matrix = multilabel_confusion_matrix(labels, y_hat)
         confusion_matrices[model_name] = confuse_matrix       
@@ -400,24 +401,31 @@ def confusionMatrices(models, dataset):
 # %% [markdown]
 # ### Determine the confusion
 # %%
-confusion_matrices = confusionMatrices(models, batch0)
+confusion_matrices = confusionMatrices(models, val_ds)
 # %% [markdown]
 # ### Function to plot confusion matrices
 # %%
 def plotConfusionMatrices(confusion_matrices):
     sqt = math.sqrt(n_labels)
     rows, columns = math.ceil(sqt), math.floor(sqt)
-    fig = plt.figure(figsize=(20, 20))
 
-    for i in range(n_labels):
-        fig.add_subplot(rows, columns, i + 1)
-        plt.title(f'{label2name[i]}')
-        sns.heatmap(
-            confusion_matrices['Transfer'][i],
-            annot=True,
-            fmt='d',
-        )
+    for model_name in confusion_matrices:
+        fig = plt.figure(figsize=(20, 20))
+        print(f"Heat map for {model_name} model")
+        for i in range(n_labels):
+            fig.add_subplot(rows, columns, i + 1)
+            plt.title(f'{label2name[i]}')
+            sns.heatmap(
+                confusion_matrices[model_name][i],
+                annot=True,
+                fmt='d',
+            )
+        plt.show()
 # %% [markdown]
 # ### Plot the confusion matrices
 # %%
 plotConfusionMatrices(confusion_matrices)
+# %%
+transfer_model.predict(val_ds)
+# %%
+saved_model.save("current_weights")
