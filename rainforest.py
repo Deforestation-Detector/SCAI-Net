@@ -122,12 +122,15 @@ def symbolicRealMapping(filename_tensor, label_tensor):
 # ### Create the spanning dataset
 
 # %%
+# first pass, construct a list of image strips
+
 file_paths = train_data['image_name'].values
 labels_strings = train_data['tags'].values
 spanning_dataset = tf.data.Dataset.from_tensor_slices((file_paths, labels_strings))
 spanning_dataset = spanning_dataset.map(symbolicRealMapping)
 spanning_dataset = spanning_dataset.prefetch(tf.data.AUTOTUNE)
 dataset_length = len(spanning_dataset)
+print(f"{dataset_length}")
 
 # %% [markdown]
 # ### Split into a test and train set, batch each
