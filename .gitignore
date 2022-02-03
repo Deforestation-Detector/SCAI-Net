@@ -3,6 +3,7 @@
 /neighbors
 /checkpoints
 /current_weights
+/model
 __pycache__
 .ipynb_checkpoints
 
