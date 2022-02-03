@@ -20,7 +20,7 @@ import scai_utils as su
 TRAIN_BATCH_SIZE = 32
 TEST_BATCH_SIZE = 64
 MODEL_BATCH_SIZE = 32
-EPOCHS = 3
+EPOCHS = 1
 CHECKPOINT_PATH = 'checkpoints/'
 ARCH = 'ResNet50V2/'
 # %% [markdown]

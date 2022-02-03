@@ -4,7 +4,7 @@ import pandas as pd
 import tensorflow as tf
 from PIL import Image
 import tensorflow.keras.backend as Kb
-from tensorflow.keras.applications import ResNet50V2, Xception, VGG16
+from tensorflow.keras.applications import ResNet50V2, Xception, VGG16, MobileNetV2
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Input, Dense, BatchNormalization, Activation
 from tensorflow.keras.models import Sequential, load_model
 from matplotlib import pyplot as plt
