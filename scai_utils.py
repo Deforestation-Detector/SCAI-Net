@@ -17,6 +17,8 @@ DATA_PATH = 'data/train-jpg/'
 TRAIN_BATCH_SIZE = 32
 TEST_BATCH_SIZE = 64
 THRESHOLD = 0.5
+N_LABELS = None
+MAPPING = None
 # %%
 def readImage(filename_tensor, resize = [IMG_DIMS, IMG_DIMS]):
     full_path = DATA_PATH + filename_tensor.decode("utf-8") + '.jpg'
@@ -29,30 +31,24 @@ def readImage(filename_tensor, resize = [IMG_DIMS, IMG_DIMS]):
     return img
 
 # %%
-def multihot(label_tensor, mapping, n_labels):
+def multihot(label_tensor):
     label_string = label_tensor.decode("utf-8")
-    label = tf.zeros([n_labels], dtype=tf.float16)
+    label = tf.zeros([N_LABELS], dtype=tf.float16)
     tokens = label_string.split(' ')
 
     for k in range(len(tokens)):
-        label += mapping[tokens[k]]
+        label += MAPPING[tokens[k]]
 
     return label
 # %%
-def symbolicRealMapping(filename_tensor, label_tensor, mapping, n_labels):
+def symbolicRealMapping(filename_tensor, label_tensor):
     """Function that returns a tuple of normalized image array and labels array.
     Args:
         filename: string representing path to image
         label: 0/1 one-dimensional array of size N_LABELS
     """
-
-    print(f'{filename_tensor=}')
-    print(f'{label_tensor=}')
-    print(f'{mapping=}')
-    print(f'{n_labels=}')
-
     img = tf.numpy_function(readImage, [filename_tensor], tf.float32)
-    label_multihot = tf.numpy_function(multihot, [label_tensor, mapping, n_labels], tf.float16)
+    label_multihot = tf.numpy_function(multihot, [label_tensor], tf.float16)
 
     # # print(f"{img = }")
 

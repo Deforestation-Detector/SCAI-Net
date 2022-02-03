@@ -50,7 +50,7 @@ for k, v in unique_labels.items():
     mapping[k][v] = 1.0
     mapping[k] = tf.constant(mapping[k])
 
-
+su.MAPPING, su.N_LABELS = mapping, n_labels
 label2name = [k for k in unique_labels]
 
 print(label2name)
@@ -67,7 +67,7 @@ train_data.head(n = 5)
 file_paths = train_data['image_name'].values
 labels_strings = train_data['tags'].values
 spanning_dataset = tf.data.Dataset.from_tensor_slices((file_paths, labels_strings))
-spanning_dataset = spanning_dataset.map(lambda x, y: su.symbolicRealMapping(x, y, mapping, n_labels))
+spanning_dataset = spanning_dataset.map(su.symbolicRealMapping)
 spanning_dataset = spanning_dataset.prefetch(tf.data.AUTOTUNE)
 dataset_length = len(spanning_dataset)
 
