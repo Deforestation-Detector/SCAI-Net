@@ -15,7 +15,6 @@ ARCH = 'ResNet50V2/'
 MODELS = []
 
 def main(argv):
-    print(f'{argv = }')
     training = True
     argc = len(argv)
 
