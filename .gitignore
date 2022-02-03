@@ -1,6 +1,7 @@
 /data
 /venv
 /neighbors
+/checkpoints
 .ipynb_checkpoints
 
 # stupid macos file
