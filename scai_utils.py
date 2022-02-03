@@ -39,15 +39,20 @@ def multihot(label_tensor, mapping, n_labels):
 
     return label
 # %%
-def symbolicRealMapping(filename_tensor, label_tensor):
+def symbolicRealMapping(filename_tensor, label_tensor, mapping, n_labels):
     """Function that returns a tuple of normalized image array and labels array.
     Args:
         filename: string representing path to image
         label: 0/1 one-dimensional array of size N_LABELS
     """
 
+    print(f'{filename_tensor=}')
+    print(f'{label_tensor=}')
+    print(f'{mapping=}')
+    print(f'{n_labels=}')
+
     img = tf.numpy_function(readImage, [filename_tensor], tf.float32)
-    label_multihot = tf.numpy_function(multihot, [label_tensor], tf.float16)
+    label_multihot = tf.numpy_function(multihot, [label_tensor, mapping, n_labels], tf.float16)
 
     # # print(f"{img = }")
 
