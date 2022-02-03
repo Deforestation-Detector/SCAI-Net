@@ -22,7 +22,7 @@ TEST_BATCH_SIZE = 64
 MODEL_BATCH_SIZE = 32
 EPOCHS = 3
 CHECKPOINT_PATH = 'checkpoints/'
-ARCH = 'VGG16/'
+ARCH = 'ResNet50V2/'
 # %% [markdown]
 # # Preprocess data
 # ---
