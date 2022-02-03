@@ -173,10 +173,10 @@ def evalModels(models, dataset):
 # %%
 def confusionMatrices(models, dataset):
     confusion_matrices = {}
-    _, labels = dataset
+    features, labels = dataset
 
     for model_name, model in models:
-        prob_densities = model.predict(dataset)
+        prob_densities = model.predict(features)
         y_hat = tf.convert_to_tensor(np.where(prob_densities < 0.5, 0., 1.))
         confuse_matrix = multilabel_confusion_matrix(labels, y_hat)
         confusion_matrices[model_name] = confuse_matrix       

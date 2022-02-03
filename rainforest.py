@@ -95,15 +95,14 @@ def main(argv):
     su.eyeTestPredictions(transfer_model, batch0, label2name)
 
     precisions = su.evalModels(MODELS, val_ds)
-
     for model_name in precisions:
         print(f"{model_name}'s precision is {precisions[model_name]:.6f}")
 
-    confusion_matrices = su.confusionMatrices(MODELS, val_ds)
+    confusion_matrices = su.confusionMatrices(MODELS, batch0)
 
     su.plotConfusionMatrices(confusion_matrices, label2name, n_labels)
 
-    transfer_model.predict(val_ds)
+    # transfer_model.predict(val_ds)
 
 # %%
 if __name__ == "__main__":
