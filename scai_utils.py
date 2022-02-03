@@ -148,16 +148,17 @@ def displayGridItem(idx, X, y, prediction, label2name):
     plt.imshow(img)
     plt.title(prediction + '\n' + label)
 # %%
-def eyeTestPredictions(model, batch):
+def eyeTestPredictions(model, batch, label2name):
     fig = plt.figure(figsize=(20, 20))
     rows, columns = 5, 4
-    idx_array = np.random.randint(TRAIN_BATCH_SIZE, size=20)
+
+    idx_array = np.random.choice(np.arange(TRAIN_BATCH_SIZE), size=20, replace=False)
     for iter, image_idx in enumerate(idx_array):
         y_hat_probs = model.predict(batch[0])
         prediction_hot = (y_hat_probs[image_idx] > THRESHOLD).nonzero()[0]
-        prediction = reverseHot(prediction_hot)
+        prediction = reverseHot(prediction_hot, label2name)
         f = fig.add_subplot(rows, columns, iter + 1)
-        displayGridItem(image_idx, batch[0], batch[1], prediction)
+        displayGridItem(image_idx, batch[0], batch[1], prediction, label2name)
 
     plt.show()
 # %%
@@ -175,14 +176,6 @@ def confusionMatrices(models, dataset):
     _, labels = dataset
 
     for model_name, model in models:
-        # for batch in dataset:
-        #     prob_densities = model.predict(batch).numpy()
-        #     y_hat = tf.convert_to_tensor(np.where(prob_densities < 0.5, 0, 1))
-        #     _, labels = batch
-        #     confusion_matrix = tf.math.conf
-        #     confusion_matrix = tf.math.confusion_matrix(labels, y_hat)
-        #     confusion_matrix = tf.concat((confusion_matrix, [labels]), axis = 0)
-        #     break
         prob_densities = model.predict(dataset)
         y_hat = tf.convert_to_tensor(np.where(prob_densities < 0.5, 0., 1.))
         confuse_matrix = multilabel_confusion_matrix(labels, y_hat)
