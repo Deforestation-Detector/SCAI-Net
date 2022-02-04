@@ -130,25 +130,25 @@ def plot_history(history_df, y):
     plt.legend(loc='upper right')
     plt.show()
 # %%
-def reverseHot(label_numpy, label2name):
+def reverseHot(label_numpy, classes):
     label = []
     for i in label_numpy:
-        label.append(label2name[i])
+        label.append(classes[i])
     return ' '.join(label)
 # %%
-def displayGridItem(idx, X, y, prediction, label2name):
+def displayGridItem(idx, X, y, prediction, classes):
     img = tf.cast(X[idx] * 255, tf.uint8)
     # print(f"{img = }")
     indices = tf.where(y[idx] == 1).numpy()
     label_arr = []
     for index in indices:
-        label_arr.append(label2name[index[0]])
+        label_arr.append(classes[index[0]])
     label = ' '.join(label_arr)
     plt.axis('off')
     plt.imshow(img)
     plt.title(prediction + '\n' + label)
 # %%
-def eyeTestPredictions(model, datagen, label2name):
+def eyeTestPredictions(model, datagen, classes):
     fig = plt.figure(figsize=(20, 20))
     rows, columns = 5, 4
 
@@ -159,9 +159,9 @@ def eyeTestPredictions(model, datagen, label2name):
     for iter, image_idx in enumerate(idx_array):
         y_hat_probs = model.predict(x_batch)
         prediction_hot = (y_hat_probs[image_idx] > THRESHOLD).nonzero()[0]
-        prediction = reverseHot(prediction_hot, label2name)
+        prediction = reverseHot(prediction_hot, classes)
         f = fig.add_subplot(rows, columns, iter + 1)
-        displayGridItem(image_idx, x_batch, y_batch, prediction, label2name)
+        displayGridItem(image_idx, x_batch, y_batch, prediction, classes)
 
     plt.show()
 # %%
@@ -203,7 +203,7 @@ def confusionMatrices(models, dataset):
     
     return confusion_matrices
 # %%
-def plotConfusionMatrices(confusion_matrices, label2name, n_labels):
+def plotConfusionMatrices(confusion_matrices, classes, n_labels):
     sqt = math.sqrt(n_labels)
     rows, columns = math.ceil(sqt), math.floor(sqt)
 
@@ -212,7 +212,7 @@ def plotConfusionMatrices(confusion_matrices, label2name, n_labels):
         print(f"Heat map for {model_name} model")
         for i in range(n_labels):
             fig.add_subplot(rows, columns, i + 1)
-            plt.title(f'{label2name[i]}')
+            plt.title(f'{classes[i]}')
             sns.heatmap(
                 confusion_matrices[model_name][i],
                 annot=True,

@@ -49,9 +49,9 @@ def main(argv):
     mlb = MultiLabelBinarizer()
     mlb.fit(train_dataframe["tags"].str.split(" "))
 
-    new_columns = [f"{c}" for c in mlb.classes_]
+    classes = [f"{c}" for c in mlb.classes_]
 
-    ids = pd.DataFrame(mlb.fit_transform(train_dataframe['tags'].str.split(' ')), columns = new_columns)
+    ids = pd.DataFrame(mlb.fit_transform(train_dataframe['tags'].str.split(' ')), columns = classes)
 
     train_df = pd.concat( [train_dataframe[['image_name']], ids], axis=1 )
     train_dataframe = None
@@ -59,8 +59,8 @@ def main(argv):
 
     datagen = tf.keras.preprocessing.image.ImageDataGenerator(
         rotation_range = 45,
-        width_shift_range = 0.15,
-        height_shift_range = 0.15,
+        # width_shift_range = 0.15,
+        # height_shift_range = 0.15,
         # channel_shift_range = 0.5
         # brightness_range = (0.2, 0.7),
         # shear_range = 0.2,
@@ -74,7 +74,7 @@ def main(argv):
         train_df,
         directory = './data/train-jpg/',
         x_col = 'image_name',
-        y_col = new_columns,
+        y_col = classes,
         class_mode = 'raw',
         subset = 'training',
         validate_filenames = False,
@@ -87,7 +87,7 @@ def main(argv):
         directory = './data/train-jpg/',
         # class_mode = 'multi_output',
         x_col = 'image_name',
-        y_col = new_columns,
+        y_col = classes,
         class_mode = 'raw',
         subset = 'validation',
         validate_filenames = False,
@@ -128,8 +128,15 @@ def main(argv):
         transfer_model = tf.keras.models.load_model(CHECKPOINT_PATH + ARCH)
     MODELS.append(('Transfer', transfer_model))
 
+    print("Transfer model eyetest")
+    su.eyeTestPredictions(transfer_model, val_dg, classes)
+
+    precisions = su.evalModels(MODELS, val_dg)
+    for model_name in precisions:
+        print(f"{model_name}'s precision is {precisions[model_name]:.6f}")
+
     confusion_matrices = su.confusionMatrices(MODELS, val_dg)
-    su.plotConfusionMatrices(confusion_matrices, label2name, n_labels)
+    su.plotConfusionMatrices(confusion_matrices, classes, n_labels)
 
 # %%
 if __name__ == "__main__":
