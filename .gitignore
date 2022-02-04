@@ -4,7 +4,12 @@
 /checkpoints
 /current_weights
 /model
-__pycache__
-.ipynb_checkpoints
 
+__pycache__
+
+*.log
+main.py
+mnist.py
+
+.ipynb_checkpoints
 .DS_Store
