@@ -15,7 +15,7 @@ import math
 IMG_DIMS = 256
 DATA_PATH = 'data/train-jpg/'
 TRAIN_BATCH_SIZE = 32
-TEST_BATCH_SIZE = 64
+VAL_BATCH_SIZE = 64
 THRESHOLD = 0.5
 N_LABELS = None
 MAPPING = None
@@ -155,7 +155,6 @@ def eyeTestPredictions(model, datagen, label2name):
     for x_batch, y_batch in datagen:
         break
 
-    print(f'{x_batch[0] = }')
     idx_array = np.random.choice(np.arange(TRAIN_BATCH_SIZE), size=20, replace=False)
     for iter, image_idx in enumerate(idx_array):
         y_hat_probs = model.predict(x_batch)
@@ -177,13 +176,30 @@ def evalModels(models, dataset):
 # %%
 def confusionMatrices(models, dataset):
     confusion_matrices = {}
-    features, labels = dataset
+
+    cardinality = len(dataset) * VAL_BATCH_SIZE
 
     for model_name, model in models:
-        prob_densities = model.predict(features)
-        y_hat = tf.convert_to_tensor(np.where(prob_densities < 0.5, 0., 1.))
-        confuse_matrix = multilabel_confusion_matrix(labels, y_hat)
-        confusion_matrices[model_name] = confuse_matrix       
+        percent_complete = 0
+        percent_increments = 0.1
+        milestone = percent_increments
+        i = 0
+        confusion_matrices[model_name] = np.zeros((N_LABELS, 2, 2)).astype(int)
+
+        print(f'Obtaining confusion matrix for {model_name}')
+        for features, labels in dataset:
+            prob_densities = model.predict(features)
+            y_hat = tf.convert_to_tensor(np.where(prob_densities < 0.5, 0., 1.))
+            confuse_matrix = multilabel_confusion_matrix(labels, y_hat).astype(int)
+            confusion_matrices[model_name] += confuse_matrix
+            percent_complete += VAL_BATCH_SIZE / cardinality
+            i += 1
+
+            if percent_complete > milestone:
+                print(f'{(percent_complete * 100):.0f}% complete')
+                milestone += percent_increments
+            if i > 126:
+                break
     
     return confusion_matrices
 # %%

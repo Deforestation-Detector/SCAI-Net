@@ -51,10 +51,8 @@ def main(argv):
 
     new_columns = [f"{c}" for c in mlb.classes_]
 
-    # Create new DataFrame with transformed/one-hot encoded IDs
     ids = pd.DataFrame(mlb.fit_transform(train_dataframe['tags'].str.split(' ')), columns = new_columns)
 
-    # Concat with original `Label` column
     train_df = pd.concat( [train_dataframe[['image_name']], ids], axis=1 )
     train_dataframe = None
     train_dg, val_dg = None, None
@@ -81,6 +79,7 @@ def main(argv):
         subset = 'training',
         validate_filenames = False,
         batch_size = TRAIN_BATCH_SIZE,
+        shuffle = True,
     )
 
     val_dg = datagen.flow_from_dataframe(
@@ -92,21 +91,11 @@ def main(argv):
         class_mode = 'raw',
         subset = 'validation',
         validate_filenames = False,
-        batch_size = VAL_BATCH_SIZE
+        batch_size = VAL_BATCH_SIZE,
+        shuffle = True,
     )
 
     print(f'train_df.head =\n{train_df.head(n = 5)}')
-
-    # file_paths = train_dataframe['image_name'].values
-    # labels_strings = train_dataframe['tags'].values
-    # spanning_dataset = tf.data.Dataset.from_tensor_slices((file_paths, labels_strings))
-    # spanning_dataset = spanning_dataset.map(su.symbolicRealMapping)
-    # spanning_dataset = spanning_dataset.prefetch(tf.data.AUTOTUNE)
-    # dataset_length = len(spanning_dataset)
-
-    # train_length = math.floor(0.8 * dataset_length)
-    # train_ds, val_ds = spanning_dataset.take(train_length), spanning_dataset.skip(train_length).batch(VAL_BATCH_SIZE)
-    # transfer_model = None
 
     if training:
         transfer_model = su.create_model(n_labels)
@@ -147,21 +136,8 @@ def main(argv):
         transfer_model = tf.keras.models.load_model(CHECKPOINT_PATH + ARCH)
     MODELS.append(('Transfer', transfer_model))
 
-    print(f'{val_dg = }')
-
-    print("Transfer model eyetest")
-    su.eyeTestPredictions(transfer_model, val_dg, label2name)
-
-    precisions = su.evalModels(MODELS, val_dg)
-    for model_name in precisions:
-        print(f"{model_name}'s precision is {precisions[model_name]:.6f}")
-
-    print('Yyaya?')
     confusion_matrices = su.confusionMatrices(MODELS, val_dg)
-
     su.plotConfusionMatrices(confusion_matrices, label2name, n_labels)
-
-    # transfer_model.predict(val_ds)
 
 # %%
 if __name__ == "__main__":
