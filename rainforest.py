@@ -5,14 +5,17 @@ import tensorflow as tf
 import math
 import scai_utils as su
 import sys
+from sklearn.preprocessing import MultiLabelBinarizer
+import gc
 
 TRAIN_BATCH_SIZE = 32
-TEST_BATCH_SIZE = 64
+VAL_BATCH_SIZE = 64
 MODEL_BATCH_SIZE = 32
 EPOCHS = 3
 CHECKPOINT_PATH = 'checkpoints/'
 ARCH = 'ResNet50V2/'
 MODELS = []
+DATA_PATH = 'data/train-jpg/'
 
 def main(argv):
     training = True
@@ -20,11 +23,12 @@ def main(argv):
 
     if argc != 0 and argv[0] == '-l':
         training = False
-    train_data = pd.read_csv('data/train_v2.csv')
+    train_dataframe = pd.read_csv('data/train_v2.csv').astype(str)
+    train_dataframe['image_name'] += '.jpg'
 
     curr_count = 0
     unique_labels = {}
-    for line in train_data['tags'].values:
+    for line in train_dataframe['tags'].values:
         for label in line.split():
             if label not in unique_labels:
                 unique_labels[label] = curr_count
@@ -42,18 +46,33 @@ def main(argv):
     su.MAPPING, su.N_LABELS = mapping, n_labels
     label2name = [k for k in unique_labels]
 
-    train_data.head(n = 5)
+    mlb = MultiLabelBinarizer()
+    mlb.fit(train_dataframe["tags"].str.split(" "))
 
-    file_paths = train_data['image_name'].values
-    labels_strings = train_data['tags'].values
-    spanning_dataset = tf.data.Dataset.from_tensor_slices((file_paths, labels_strings))
-    spanning_dataset = spanning_dataset.map(su.symbolicRealMapping)
-    spanning_dataset = spanning_dataset.prefetch(tf.data.AUTOTUNE)
-    dataset_length = len(spanning_dataset)
+    new_columns = [f"{c}" for c in mlb.classes_]
+    print(f'{new_columns = }')
 
-    train_length = math.floor(0.8 * dataset_length)
-    train_ds, val_ds = spanning_dataset.take(train_length).batch(TRAIN_BATCH_SIZE), spanning_dataset.skip(train_length).batch(TEST_BATCH_SIZE)
-    transfer_model = None
+    # Create new DataFrame with transformed/one-hot encoded IDs
+    ids = pd.DataFrame(mlb.fit_transform(train_dataframe['tags'].str.split(' ')), columns = new_columns)
+
+    # Concat with original `Label` column
+    train_df = pd.concat( [train_dataframe[['image_name']], ids], axis=1 )
+    train_dataframe = None
+
+    print(f'{type(new_columns[0]) = }')
+
+    print(f'train_df.head =\n{train_df.head(n = 5)}')
+
+    # file_paths = train_dataframe['image_name'].values
+    # labels_strings = train_dataframe['tags'].values
+    # spanning_dataset = tf.data.Dataset.from_tensor_slices((file_paths, labels_strings))
+    # spanning_dataset = spanning_dataset.map(su.symbolicRealMapping)
+    # spanning_dataset = spanning_dataset.prefetch(tf.data.AUTOTUNE)
+    # dataset_length = len(spanning_dataset)
+
+    # train_length = math.floor(0.8 * dataset_length)
+    # train_ds, val_ds = spanning_dataset.take(train_length), spanning_dataset.skip(train_length).batch(VAL_BATCH_SIZE)
+    # transfer_model = None
 
     if training:
         transfer_model = su.create_model(n_labels)
@@ -69,12 +88,47 @@ def main(argv):
             save_best_only=True,
         )
 
-        transfer_history = transfer_model.fit(train_ds,
+        datagen = tf.keras.preprocessing.image.ImageDataGenerator(
+            rotation_range=45,
+            width_shift_range=15,
+            height_shift_range=15,
+            horizontal_flip=True,
+            vertical_flip=True,
+            validation_split = 0.2
+        )
+
+        train_dg = datagen.flow_from_dataframe(
+            train_df,
+            directory = './data/train-jpg/',
+            x_col = 'image_name',
+            y_col = new_columns,
+            class_mode = 'raw',
+        )
+
+        val_dg = datagen.flow_from_dataframe(
+            train_df,
+            directory = './data/train-jpg/',
+            # class_mode = 'multi_output',
+            x_col = 'image_name',
+            y_col = new_columns,
+            class_mode = 'raw',
+        )
+
+        # transfer_history = transfer_model.fit(train_datagen,
+        #     epochs = EPOCHS,
+        #     callbacks = [val_loss_checkpoint],
+        #     batch_size = MODEL_BATCH_SIZE,
+        #     validation_data = val_datagen,
+        #     verbose = 1
+        # )
+
+        transfer_history = transfer_model.fit(train_dg,
             epochs = EPOCHS,
             callbacks = [val_loss_checkpoint],
             batch_size = MODEL_BATCH_SIZE,
-            validation_data = val_ds,
-            verbose = 1)
+            validation_data = val_dg,
+            verbose = 1
+        )
         
         transfer_history_df = pd.DataFrame(transfer_history.history)
         transfer_history_df.head(n = 5)
