@@ -148,17 +148,21 @@ def displayGridItem(idx, X, y, prediction, label2name):
     plt.imshow(img)
     plt.title(prediction + '\n' + label)
 # %%
-def eyeTestPredictions(model, batch, label2name):
+def eyeTestPredictions(model, datagen, label2name):
     fig = plt.figure(figsize=(20, 20))
     rows, columns = 5, 4
 
+    for x_batch, y_batch in datagen:
+        break
+
+    print(f'{x_batch[0] = }')
     idx_array = np.random.choice(np.arange(TRAIN_BATCH_SIZE), size=20, replace=False)
     for iter, image_idx in enumerate(idx_array):
-        y_hat_probs = model.predict(batch[0])
+        y_hat_probs = model.predict(x_batch)
         prediction_hot = (y_hat_probs[image_idx] > THRESHOLD).nonzero()[0]
         prediction = reverseHot(prediction_hot, label2name)
         f = fig.add_subplot(rows, columns, iter + 1)
-        displayGridItem(image_idx, batch[0], batch[1], prediction, label2name)
+        displayGridItem(image_idx, x_batch, y_batch, prediction, label2name)
 
     plt.show()
 # %%

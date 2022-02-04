@@ -68,7 +68,8 @@ def main(argv):
         # shear_range = 0.2,
         horizontal_flip = True,
         vertical_flip = True,
-        validation_split = 0.2
+        validation_split = 0.2,
+        rescale = 1/255
     )
 
     train_dg = datagen.flow_from_dataframe(
@@ -148,12 +149,6 @@ def main(argv):
 
     print(f'{val_dg = }')
 
-    batch0 = None
-    for batch in val_dg:
-        print(f'{batch = }')
-        batch0 = batch
-        break
-
     print("Transfer model eyetest")
     su.eyeTestPredictions(transfer_model, val_dg, label2name)
 
@@ -161,7 +156,8 @@ def main(argv):
     for model_name in precisions:
         print(f"{model_name}'s precision is {precisions[model_name]:.6f}")
 
-    confusion_matrices = su.confusionMatrices(MODELS, batch0)
+    print('Yyaya?')
+    confusion_matrices = su.confusionMatrices(MODELS, val_dg)
 
     su.plotConfusionMatrices(confusion_matrices, label2name, n_labels)
 
