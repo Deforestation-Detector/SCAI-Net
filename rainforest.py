@@ -50,7 +50,6 @@ def main(argv):
     mlb.fit(train_dataframe["tags"].str.split(" "))
 
     new_columns = [f"{c}" for c in mlb.classes_]
-    print(f'{new_columns = }')
 
     # Create new DataFrame with transformed/one-hot encoded IDs
     ids = pd.DataFrame(mlb.fit_transform(train_dataframe['tags'].str.split(' ')), columns = new_columns)
@@ -58,8 +57,42 @@ def main(argv):
     # Concat with original `Label` column
     train_df = pd.concat( [train_dataframe[['image_name']], ids], axis=1 )
     train_dataframe = None
+    train_dg, val_dg = None, None
 
-    print(f'{type(new_columns[0]) = }')
+    datagen = tf.keras.preprocessing.image.ImageDataGenerator(
+        rotation_range = 45,
+        width_shift_range = 0.15,
+        height_shift_range = 0.15,
+        # channel_shift_range = 0.5
+        # brightness_range = (0.2, 0.7),
+        # shear_range = 0.2,
+        horizontal_flip = True,
+        vertical_flip = True,
+        validation_split = 0.2
+    )
+
+    train_dg = datagen.flow_from_dataframe(
+        train_df,
+        directory = './data/train-jpg/',
+        x_col = 'image_name',
+        y_col = new_columns,
+        class_mode = 'raw',
+        subset = 'training',
+        validate_filenames = False,
+        batch_size = TRAIN_BATCH_SIZE,
+    )
+
+    val_dg = datagen.flow_from_dataframe(
+        train_df,
+        directory = './data/train-jpg/',
+        # class_mode = 'multi_output',
+        x_col = 'image_name',
+        y_col = new_columns,
+        class_mode = 'raw',
+        subset = 'validation',
+        validate_filenames = False,
+        batch_size = VAL_BATCH_SIZE
+    )
 
     print(f'train_df.head =\n{train_df.head(n = 5)}')
 
@@ -88,41 +121,6 @@ def main(argv):
             save_best_only=True,
         )
 
-        datagen = tf.keras.preprocessing.image.ImageDataGenerator(
-            rotation_range = 45,
-            width_shift_range = 0.15,
-            height_shift_range = 0.15,
-            # channel_shift_range = 0.5
-            # brightness_range = (0.2, 0.7),
-            # shear_range = 0.2,
-            horizontal_flip = True,
-            vertical_flip = True,
-            validation_split = 0.2
-        )
-
-        train_dg = datagen.flow_from_dataframe(
-            train_df,
-            directory = './data/train-jpg/',
-            x_col = 'image_name',
-            y_col = new_columns,
-            class_mode = 'raw',
-            subset = 'training',
-            validate_filenames = False,
-            batch_size = TRAIN_BATCH_SIZE,
-        )
-
-        val_dg = datagen.flow_from_dataframe(
-            train_df,
-            directory = './data/train-jpg/',
-            # class_mode = 'multi_output',
-            x_col = 'image_name',
-            y_col = new_columns,
-            class_mode = 'raw',
-            subset = 'validation',
-            validate_filenames = False,
-            batch_size = VAL_BATCH_SIZE
-        )
-
         # transfer_history = transfer_model.fit(train_datagen,
         #     epochs = EPOCHS,
         #     callbacks = [val_loss_checkpoint],
@@ -148,15 +146,18 @@ def main(argv):
         transfer_model = tf.keras.models.load_model(CHECKPOINT_PATH + ARCH)
     MODELS.append(('Transfer', transfer_model))
 
+    print(f'{val_dg = }')
+
     batch0 = None
-    for batch in val_ds:
+    for batch in val_dg:
+        print(f'{batch = }')
         batch0 = batch
         break
 
     print("Transfer model eyetest")
-    su.eyeTestPredictions(transfer_model, batch0, label2name)
+    su.eyeTestPredictions(transfer_model, val_dg, label2name)
 
-    precisions = su.evalModels(MODELS, val_ds)
+    precisions = su.evalModels(MODELS, val_dg)
     for model_name in precisions:
         print(f"{model_name}'s precision is {precisions[model_name]:.6f}")
 
