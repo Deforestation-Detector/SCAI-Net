@@ -111,14 +111,6 @@ def main(argv):
             save_best_only=True,
         )
 
-        # transfer_history = transfer_model.fit(train_datagen,
-        #     epochs = EPOCHS,
-        #     callbacks = [val_loss_checkpoint],
-        #     batch_size = MODEL_BATCH_SIZE,
-        #     validation_data = val_datagen,
-        #     verbose = 1
-        # )
-
         transfer_history = transfer_model.fit(train_dg,
             epochs = EPOCHS,
             callbacks = [val_loss_checkpoint],
