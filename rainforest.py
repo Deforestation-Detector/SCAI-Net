@@ -89,11 +89,14 @@ def main(argv):
         )
 
         datagen = tf.keras.preprocessing.image.ImageDataGenerator(
-            rotation_range=45,
-            width_shift_range=15,
-            height_shift_range=15,
-            horizontal_flip=True,
-            vertical_flip=True,
+            rotation_range = 45,
+            width_shift_range = 0.15,
+            height_shift_range = 0.15,
+            # channel_shift_range = 0.5
+            # brightness_range = (0.2, 0.7),
+            # shear_range = 0.2,
+            horizontal_flip = True,
+            vertical_flip = True,
             validation_split = 0.2
         )
 
@@ -103,6 +106,9 @@ def main(argv):
             x_col = 'image_name',
             y_col = new_columns,
             class_mode = 'raw',
+            subset = 'training',
+            validate_filenames = False,
+            batch_size = TRAIN_BATCH_SIZE,
         )
 
         val_dg = datagen.flow_from_dataframe(
@@ -112,6 +118,9 @@ def main(argv):
             x_col = 'image_name',
             y_col = new_columns,
             class_mode = 'raw',
+            subset = 'validation',
+            validate_filenames = False,
+            batch_size = VAL_BATCH_SIZE
         )
 
         # transfer_history = transfer_model.fit(train_datagen,
