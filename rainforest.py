@@ -5,14 +5,11 @@ import scai_utils as su
 import sys
 from sklearn.preprocessing import MultiLabelBinarizer
 
-TRAIN_BATCH_SIZE = 32
-VAL_BATCH_SIZE = 64
 MODEL_BATCH_SIZE = 32
 EPOCHS = 3
 CHECKPOINT_PATH = 'checkpoints/'
 ARCH = 'ResNet50V2'
 MODELS = []
-DATA_PATH = 'data/train-jpg/'
 
 def main(argv):
     training = True
