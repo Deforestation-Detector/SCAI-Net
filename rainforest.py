@@ -13,7 +13,7 @@ VAL_BATCH_SIZE = 64
 MODEL_BATCH_SIZE = 32
 EPOCHS = 3
 CHECKPOINT_PATH = 'checkpoints/'
-ARCH = 'ResNet50V2/'
+ARCH = 'ResNet50V2'
 MODELS = []
 DATA_PATH = 'data/train-jpg/'
 
@@ -44,7 +44,6 @@ def main(argv):
         mapping[k] = tf.constant(mapping[k])
 
     su.MAPPING, su.N_LABELS = mapping, n_labels
-    label2name = [k for k in unique_labels]
 
     mlb = MultiLabelBinarizer()
     mlb.fit(train_dataframe["tags"].str.split(" "))
@@ -55,57 +54,20 @@ def main(argv):
 
     train_df = pd.concat( [train_dataframe[['image_name']], ids], axis=1 )
     train_dataframe = None
-    train_dg, val_dg = None, None
 
-    datagen = tf.keras.preprocessing.image.ImageDataGenerator(
-        rotation_range = 45,
-        # width_shift_range = 0.15,
-        # height_shift_range = 0.15,
-        # channel_shift_range = 0.5
-        # brightness_range = (0.2, 0.7),
-        # shear_range = 0.2,
-        horizontal_flip = True,
-        vertical_flip = True,
-        validation_split = 0.2,
-        rescale = 1/255
-    )
-
-    train_dg = datagen.flow_from_dataframe(
-        train_df,
-        directory = './data/train-jpg/',
-        x_col = 'image_name',
-        y_col = classes,
-        class_mode = 'raw',
-        subset = 'training',
-        validate_filenames = False,
-        batch_size = TRAIN_BATCH_SIZE,
-        shuffle = True,
-    )
-
-    val_dg = datagen.flow_from_dataframe(
-        train_df,
-        directory = './data/train-jpg/',
-        # class_mode = 'multi_output',
-        x_col = 'image_name',
-        y_col = classes,
-        class_mode = 'raw',
-        subset = 'validation',
-        validate_filenames = False,
-        batch_size = VAL_BATCH_SIZE,
-        shuffle = True,
-    )
+    train_dg, val_dg = su.create_data(train_df, classes)
 
     print(f'train_df.head =\n{train_df.head(n = 5)}')
 
     if training:
-        transfer_model = su.create_model(n_labels)
+        transfer_model = su.create_model(ARCH, n_labels)
         su.compile_model(transfer_model)
 
         if os.path.isdir(CHECKPOINT_PATH) == False:
             os.mkdir(CHECKPOINT_PATH)
 
         val_loss_checkpoint = tf.keras.callbacks.ModelCheckpoint(
-            filepath=CHECKPOINT_PATH + ARCH,
+            filepath=CHECKPOINT_PATH + ARCH + '/',
             monitor='val_loss',
             mode='min',
             save_best_only=True,
@@ -124,16 +86,16 @@ def main(argv):
 
         su.plot_history(transfer_history_df, ('Loss', 'loss'))
         su.plot_history(transfer_history_df, ('Precision', 'precision'))
+        MODELS.append(('Transfer', transfer_model))
     else:
-        transfer_model = tf.keras.models.load_model(CHECKPOINT_PATH + ARCH)
-    MODELS.append(('Transfer', transfer_model))
+        transfer_model = tf.keras.models.load_model(CHECKPOINT_PATH + ARCH + '/')
+        MODELS.append(('Transfer', transfer_model))
+        precisions = su.evalModels(MODELS, val_dg)
+        for model_name in precisions:
+            print(f"{model_name}'s precision is {precisions[model_name]:.6f}")
 
     print("Transfer model eyetest")
     su.eyeTestPredictions(transfer_model, val_dg, classes)
-
-    precisions = su.evalModels(MODELS, val_dg)
-    for model_name in precisions:
-        print(f"{model_name}'s precision is {precisions[model_name]:.6f}")
 
     confusion_matrices = su.confusionMatrices(MODELS, val_dg)
     su.plotConfusionMatrices(confusion_matrices, classes, n_labels)

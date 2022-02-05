@@ -4,7 +4,7 @@ import pandas as pd
 import tensorflow as tf
 from PIL import Image
 import tensorflow.keras.backend as Kb
-from tensorflow.keras.applications import ResNet50V2, Xception, VGG16, MobileNetV2
+from tensorflow.keras.applications import ResNet50V2, Xception, VGG16, VGG19, MobileNetV2
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Input, Dense, BatchNormalization, Activation
 from tensorflow.keras.models import Sequential, load_model
 from matplotlib import pyplot as plt
@@ -19,40 +19,55 @@ VAL_BATCH_SIZE = 64
 THRESHOLD = 0.5
 N_LABELS = None
 MAPPING = None
+
+ARCHITECTURES = {
+    'Xception': Xception(weights='imagenet', include_top=False, input_shape=(256, 256, 3)),
+    'ResNet50V2': ResNet50V2(weights='imagenet', include_top=False, input_shape=(256, 256, 3)),
+    'VGG16': VGG16(weights='imagenet', include_top=False, input_shape=(256, 256, 3)),
+    'VGG19': VGG19(weights='imagenet', include_top=False, input_shape=(256, 256, 3)),
+    'MobileNetV2': MobileNetV2(weights='imagenet', include_top=False, input_shape=(256, 256, 3)),
+}
 # %%
-def readImage(filename_tensor, resize = [IMG_DIMS, IMG_DIMS]):
-    full_path = DATA_PATH + filename_tensor.decode("utf-8") + '.jpg'
+def create_data(train_df, classes):
+    datagen = tf.keras.preprocessing.image.ImageDataGenerator(
+        rotation_range = 45,
+        # width_shift_range = 0.15,
+        # height_shift_range = 0.15,
+        # channel_shift_range = 0.5
+        # brightness_range = (0.2, 0.7),
+        # shear_range = 0.2,
+        horizontal_flip = True,
+        vertical_flip = True,
+        validation_split = 0.2,
+        rescale = 1/255
+    )
 
-    img = Image.open(full_path).convert("RGB")
-    img = np.asarray(img) / 255
-    img = tf.convert_to_tensor(img)
-    img = tf.image.resize(img, resize)
+    train_dg = datagen.flow_from_dataframe(
+        train_df,
+        directory = './data/train-jpg/',
+        x_col = 'image_name',
+        y_col = classes,
+        class_mode = 'raw',
+        subset = 'training',
+        validate_filenames = False,
+        batch_size = TRAIN_BATCH_SIZE,
+        shuffle = True,
+    )
 
-    return img
+    val_dg = datagen.flow_from_dataframe(
+        train_df,
+        directory = './data/train-jpg/',
+        # class_mode = 'multi_output',
+        x_col = 'image_name',
+        y_col = classes,
+        class_mode = 'raw',
+        subset = 'validation',
+        validate_filenames = False,
+        batch_size = VAL_BATCH_SIZE,
+        shuffle = True,
+    )
 
-# %%
-def multihot(label_tensor):
-    label_string = label_tensor.decode("utf-8")
-    label = tf.zeros([N_LABELS], dtype=tf.float16)
-    tokens = label_string.split(' ')
-
-    for k in range(len(tokens)):
-        label += MAPPING[tokens[k]]
-
-    return label
-# %%
-def symbolicRealMapping(filename_tensor, label_tensor):
-    """Function that returns a tuple of normalized image array and labels array.
-    Args:
-        filename: string representing path to image
-        label: 0/1 one-dimensional array of size N_LABELS
-    """
-    img = tf.numpy_function(readImage, [filename_tensor], tf.float32)
-    label_multihot = tf.numpy_function(multihot, [label_tensor], tf.float16)
-
-    # # print(f"{img = }")
-
-    return img, label_multihot
+    return train_dg, val_dg
 # %%
 # ### Defining the metric function
 def f1(y_true, y_pred):
@@ -92,10 +107,8 @@ def compile_model(model):
         metrics = [tf.keras.metrics.Precision()]
     )
 # %%
-def create_model(n_labels):
-    # base_model = Xception(weights='imagenet', include_top=False, input_shape=(256, 256, 3))
-    base_model = ResNet50V2(weights='imagenet', include_top=False, input_shape=(256, 256, 3))
-    # base_model = VGG16(weights='imagenet', include_top=False, input_shape=(256, 256, 3))
+def create_model(ARCH, n_labels):
+    base_model = ARCHITECTURES[ARCH]
     initializer = tf.keras.initializers.HeNormal()
 
     # for layer in base_model.layers:
@@ -146,10 +159,11 @@ def displayGridItem(idx, X, y, prediction, classes):
     label = ' '.join(label_arr)
     plt.axis('off')
     plt.imshow(img)
-    plt.title(prediction + '\n' + label)
+    plt.title(f'P: {prediction}\nL: {label}')
 # %%
 def eyeTestPredictions(model, datagen, classes):
-    fig = plt.figure(figsize=(20, 20))
+    fig = plt.figure(figsize=(20, 15))
+    fig.subplots_adjust(hspace=0.8)
     rows, columns = 5, 4
 
     for x_batch, y_batch in datagen:
@@ -200,6 +214,7 @@ def confusionMatrices(models, dataset):
                 milestone += percent_increments
             if i > 126:
                 break
+        print(f'100% complete. Confusion matrix for {model_name} calculated.')
     
     return confusion_matrices
 # %%
