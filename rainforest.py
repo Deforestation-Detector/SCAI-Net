@@ -26,25 +26,6 @@ def main(argv):
     train_dataframe = pd.read_csv('data/train_v2.csv').astype(str)
     train_dataframe['image_name'] += '.jpg'
 
-    curr_count = 0
-    unique_labels = {}
-    for line in train_dataframe['tags'].values:
-        for label in line.split():
-            if label not in unique_labels:
-                unique_labels[label] = curr_count
-                curr_count += 1
-
-    mapping = {}
-
-    n_labels = len(unique_labels)
-
-    for k, v in unique_labels.items():
-        mapping[k] = np.zeros(n_labels, dtype=np.float16)
-        mapping[k][v] = 1.0
-        mapping[k] = tf.constant(mapping[k])
-
-    su.MAPPING, su.N_LABELS = mapping, n_labels
-
     mlb = MultiLabelBinarizer()
     mlb.fit(train_dataframe["tags"].str.split(" "))
 
@@ -60,7 +41,7 @@ def main(argv):
     print(f'train_df.head =\n{train_df.head(n = 5)}')
 
     if training:
-        transfer_model = su.create_model(ARCH, n_labels)
+        transfer_model = su.create_model(ARCH)
         su.compile_model(transfer_model)
 
         if os.path.isdir(CHECKPOINT_PATH) == False:
@@ -98,7 +79,7 @@ def main(argv):
     su.eyeTestPredictions(transfer_model, val_dg, classes)
 
     confusion_matrices = su.confusionMatrices(MODELS, val_dg)
-    su.plotConfusionMatrices(confusion_matrices, classes, n_labels)
+    su.plotConfusionMatrices(confusion_matrices, classes)
 
 # %%
 if __name__ == "__main__":

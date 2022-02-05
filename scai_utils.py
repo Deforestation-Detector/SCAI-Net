@@ -17,7 +17,6 @@ TRAIN_BATCH_SIZE = 32
 VAL_BATCH_SIZE = 64
 THRESHOLD = 0.5
 N_LABELS = None
-MAPPING = None
 
 ARCHITECTURES = {
     'Xception': Xception(weights='imagenet', include_top=False, input_shape=(256, 256, 3)),
@@ -105,7 +104,7 @@ def compile_model(model):
         metrics = [tf.keras.metrics.Precision()]
     )
 # %%
-def create_model(ARCH, n_labels):
+def create_model(ARCH):
     base_model = ARCHITECTURES[ARCH]
     initializer = tf.keras.initializers.HeNormal()
 
@@ -125,7 +124,7 @@ def create_model(ARCH, n_labels):
     transfer_model.add(BatchNormalization())
     transfer_model.add(Activation('relu'))
 
-    transfer_model.add(Dense(n_labels, activation = Activation('sigmoid')))
+    transfer_model.add(Dense(N_LABELS, activation = Activation('sigmoid')))
 
     return transfer_model
 # %%
@@ -216,14 +215,14 @@ def confusionMatrices(models, dataset):
     
     return confusion_matrices
 # %%
-def plotConfusionMatrices(confusion_matrices, classes, n_labels):
-    sqt = math.sqrt(n_labels)
+def plotConfusionMatrices(confusion_matrices, classes):
+    sqt = math.sqrt(N_LABELS)
     rows, columns = math.ceil(sqt), math.floor(sqt)
 
     for model_name in confusion_matrices:
         fig = plt.figure(figsize=(20, 20))
         print(f"Heat map for {model_name} model")
-        for i in range(n_labels):
+        for i in range(N_LABELS):
             fig.add_subplot(rows, columns, i + 1)
             plt.title(f'{classes[i]}')
             sns.heatmap(
