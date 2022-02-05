@@ -2,7 +2,6 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from PIL import Image
 import tensorflow.keras.backend as Kb
 from tensorflow.keras.applications import ResNet50V2, Xception, VGG16, VGG19, MobileNetV2
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Input, Dense, BatchNormalization, Activation
@@ -57,7 +56,6 @@ def create_data(train_df, classes):
     val_dg = datagen.flow_from_dataframe(
         train_df,
         directory = './data/train-jpg/',
-        # class_mode = 'multi_output',
         x_col = 'image_name',
         y_col = classes,
         class_mode = 'raw',
