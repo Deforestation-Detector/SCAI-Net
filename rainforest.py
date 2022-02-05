@@ -1,12 +1,9 @@
 import os
-import numpy as np
 import pandas as pd
 import tensorflow as tf
-import math
 import scai_utils as su
 import sys
 from sklearn.preprocessing import MultiLabelBinarizer
-import gc
 
 TRAIN_BATCH_SIZE = 32
 VAL_BATCH_SIZE = 64
@@ -25,6 +22,7 @@ def main(argv):
         training = False
     train_dataframe = pd.read_csv('data/train_v2.csv').astype(str)
     train_dataframe['image_name'] += '.jpg'
+    su.set_NLABELS(train_dataframe)
 
     mlb = MultiLabelBinarizer()
     mlb.fit(train_dataframe["tags"].str.split(" "))

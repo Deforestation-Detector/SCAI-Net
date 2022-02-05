@@ -1,6 +1,5 @@
 # %%
 import numpy as np
-import pandas as pd
 import tensorflow as tf
 import tensorflow.keras.backend as Kb
 from tensorflow.keras.applications import ResNet50V2, Xception, VGG16, VGG19, MobileNetV2
@@ -25,6 +24,18 @@ ARCHITECTURES = {
     'VGG19': VGG19(weights='imagenet', include_top=False, input_shape=(256, 256, 3)),
     'MobileNetV2': MobileNetV2(weights='imagenet', include_top=False, input_shape=(256, 256, 3)),
 }
+# %%
+def set_NLABELS(train_dataframe):
+    global N_LABELS
+    curr_count = 0
+    unique_labels = {}
+    for line in train_dataframe['tags'].values:
+        for label in line.split():
+            if label not in unique_labels:
+                unique_labels[label] = curr_count
+                curr_count += 1
+
+    N_LABELS = len(unique_labels)
 # %%
 def create_data(train_df, classes):
     datagen = tf.keras.preprocessing.image.ImageDataGenerator(
@@ -195,6 +206,7 @@ def confusionMatrices(models, dataset):
         percent_increments = 0.1
         milestone = percent_increments
         i = 0
+        print(f'{N_LABELS = }')
         confusion_matrices[model_name] = np.zeros((N_LABELS, 2, 2)).astype(int)
 
         print(f'Obtaining confusion matrix for {model_name}')
