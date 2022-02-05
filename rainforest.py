@@ -8,7 +8,7 @@ from sklearn.preprocessing import MultiLabelBinarizer
 MODEL_BATCH_SIZE = 32
 EPOCHS = 3
 CHECKPOINT_PATH = 'checkpoints/'
-ARCH = 'ResNet50V2'
+ARCH = 'VGG19'
 MODELS = []
 
 def main(argv):

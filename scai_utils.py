@@ -17,7 +17,7 @@ VAL_BATCH_SIZE = 64
 THRESHOLD = 0.5
 N_LABELS = None
 
-ARCHITECTURES = {
+TRANSFER_ARCHITECTURES = {
     'Xception': Xception(weights='imagenet', include_top=False, input_shape=(256, 256, 3)),
     'ResNet50V2': ResNet50V2(weights='imagenet', include_top=False, input_shape=(256, 256, 3)),
     'VGG16': VGG16(weights='imagenet', include_top=False, input_shape=(256, 256, 3)),
@@ -116,7 +116,7 @@ def compile_model(model):
     )
 # %%
 def create_model(ARCH):
-    base_model = ARCHITECTURES[ARCH]
+    base_model = TRANSFER_ARCHITECTURES[ARCH]
     initializer = tf.keras.initializers.HeNormal()
 
     # for layer in base_model.layers:
