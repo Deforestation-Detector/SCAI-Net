@@ -4,16 +4,22 @@ import tensorflow as tf
 import scai_utils as su
 import sys
 from sklearn.preprocessing import MultiLabelBinarizer
+import argparse
 
 MODEL_BATCH_SIZE = 32
 EPOCHS = 3
 CHECKPOINT_PATH = 'checkpoints/'
-ARCH = 'VGG19'
+ARCH = 'ResNet50V2'
 MODELS = []
 
 def main(argv):
     training = True
     argc = len(argv)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-l')
+    parser.add_argument('-t')
+    parser.add_argument('-ts')
 
     if argc != 0 and argv[0] == '-l':
         training = False
@@ -34,10 +40,11 @@ def main(argv):
     train_dg, val_dg = su.create_data(train_df, classes)
 
     print(f'train_df.head =\n{train_df.head(n = 5)}')
+    model = None
 
     if training:
-        transfer_model = su.create_model(ARCH)
-        su.compile_model(transfer_model)
+        model = su.create_transfer_model(ARCH)
+        su.compile_model(model)
 
         if os.path.isdir(CHECKPOINT_PATH) == False:
             os.mkdir(CHECKPOINT_PATH)
@@ -49,7 +56,7 @@ def main(argv):
             save_best_only=True,
         )
 
-        transfer_history = transfer_model.fit(train_dg,
+        history = model.fit(train_dg,
             epochs = EPOCHS,
             callbacks = [val_loss_checkpoint],
             batch_size = MODEL_BATCH_SIZE,
@@ -57,21 +64,20 @@ def main(argv):
             verbose = 1
         )
         
-        transfer_history_df = pd.DataFrame(transfer_history.history)
-        transfer_history_df.head(n = 5)
+        history_df = pd.DataFrame(history.history)
+        history_df.head(n = 5)
 
-        su.plot_history(transfer_history_df, ('Loss', 'loss'))
-        su.plot_history(transfer_history_df, ('Precision', 'precision'))
-        MODELS.append(('Transfer', transfer_model))
+        su.plot_history(history_df, ('Loss', 'loss'))
+        su.plot_history(history_df, ('Precision', 'precision'))
+        MODELS.append(('Transfer', model))
     else:
-        transfer_model = tf.keras.models.load_model(CHECKPOINT_PATH + ARCH + '/')
-        MODELS.append(('Transfer', transfer_model))
+        model = tf.keras.models.load_model(CHECKPOINT_PATH + ARCH + '/')
+        MODELS.append(('Transfer', model))
         precisions = su.evalModels(MODELS, val_dg)
         for model_name in precisions:
             print(f"{model_name}'s precision is {precisions[model_name]:.6f}")
 
-    print("Transfer model eyetest")
-    su.eyeTestPredictions(transfer_model, val_dg, classes)
+    su.eyeTestPredictions(model, val_dg, classes)
 
     confusion_matrices = su.confusionMatrices(MODELS, val_dg)
     su.plotConfusionMatrices(confusion_matrices, classes)

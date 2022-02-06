@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as Kb
 from tensorflow.keras.applications import ResNet50V2, Xception, VGG16, VGG19, MobileNetV2
-from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Input, Dense, BatchNormalization, Activation
+from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Input, Dense, BatchNormalization, Activation, Conv2D, MaxPooling2D, Flatten
 from tensorflow.keras.models import Sequential, load_model
 from matplotlib import pyplot as plt
 import seaborn as sns
@@ -115,7 +115,7 @@ def compile_model(model):
         metrics = [tf.keras.metrics.Precision()]
     )
 # %%
-def create_model(ARCH):
+def create_transer_model(ARCH):
     base_model = TRANSFER_ARCHITECTURES[ARCH]
     initializer = tf.keras.initializers.HeNormal()
 
@@ -206,7 +206,6 @@ def confusionMatrices(models, dataset):
         percent_increments = 0.1
         milestone = percent_increments
         i = 0
-        print(f'{N_LABELS = }')
         confusion_matrices[model_name] = np.zeros((N_LABELS, 2, 2)).astype(int)
 
         print(f'Obtaining confusion matrix for {model_name}')
