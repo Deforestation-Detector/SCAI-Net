@@ -58,11 +58,13 @@ def main():
                 continue
             # for each list argument, if the model was listed, set the 
             # corresponding value to True
+            print(f'{arg.split = }')
             if arg_dict[arg] != None:
                 for model_name in arg_dict[arg].pop():
                     if model_name not in model_dict:
                         model_dict[model_name] = dict()
-                    model_dict[model_name][arg] = True
+                    for flag in arg:
+                        model_dict[model_name][flag] = True
 
     if args.v:
         print(f'{model_dict=}') # should be printed during verbose mode
@@ -100,8 +102,7 @@ def main():
             if operation == 't': is_training = True
             if operation == 'l': is_loaded = True
             if operation == 'e': is_evaluated = True
-            if operation == 'ts': is_training, is_saved = True, True
-            if operation == 'le': is_loaded, is_evaluated = True, True
+            if operation == 's': is_saved = True
 
         # initialize model list. Used for model evaluation
         model_list = []
