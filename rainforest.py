@@ -136,6 +136,7 @@ def main():
             su.plot_history(history_df, ('Precision', 'precision'))
             model_list.append(model)
         else:
+            # model is not being trained
             # if the model is being evaluated, load it from ./checkpoints
             if is_loaded:
                 model = tf.keras.models.load_model(CHECKPOINT_PATH + model_name + '/')
