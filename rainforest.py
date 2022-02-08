@@ -34,6 +34,10 @@ def main():
                         choices=model_choices,
                         help='Train and save mode. Train the next N models that'
                         ' follow this flag and save each.')
+    parser.add_argument('-le', action='append', nargs='+', type=str,
+                        choices=model_choices,
+                        help='Load and evaluate mode. Load and evaluate the next N models that'
+                        ' follow this flag.')
 
     # get the number of arguments and construct the argument namespace object
     argc = len(sys.argv)
@@ -85,13 +89,15 @@ def main():
 
     # compute operations on models specified at the command line
     for model_name in model_dict:
+        is_training, is_loaded, is_evaluated, is_training = False, False, False, False
 
         # parse model_dict booleans for the current model
         for operation in model_dict[model_name]:
-            is_training = True if operation == 't' else False
-            is_loaded = True if operation == 'l' else False
-            is_evaluated = True if operation == 'e' else False
-            is_training, is_saved = (True, True) if operation == 'ts' else (False, False)
+            if operation == 't': is_training = True
+            if operation == 'l': is_loaded = True
+            if operation == 'e': is_evaluated = True
+            if operation == 'ts': is_training, is_saved = True, True
+            if operation == 'le': is_loaded, is_evaluated = True, True
 
         # initialize model list. Used for model evaluation
         model_list = []
@@ -105,6 +111,7 @@ def main():
             if os.path.isdir(CHECKPOINT_PATH) == False:
                 os.mkdir(CHECKPOINT_PATH)
 
+            callbacks = []
             if is_saved:
                 # construct model checkpoint object. during training, this saves 
                 # the model weights at when the current weights are better than 
@@ -117,8 +124,6 @@ def main():
                     save_best_only=True,
                 )
                 callbacks = [val_loss_checkpoint]
-            else:
-                callbacks = []
 
             # train model on dataset and use the checkpoint object
             history = model.fit(train_dg,
