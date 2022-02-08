@@ -239,7 +239,7 @@ def ensembleConfusion(models, dataset):
         batch_size = labels.shape[0]
         prob_densities = np.zeros((batch_size, 17))
 
-        for _, model in models:
+        for model in models:
             prob_densities += model.predict(features)
         
         prob_densities /= num_models
