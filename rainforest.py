@@ -18,21 +18,19 @@ def main():
     training = True
 
     parser = argparse.ArgumentParser()
-    # Verbose mode. Display loss graphs, precision graphs, confusion matrices etc
-    parser.add_argument('-v', action='store_true')
-    # Training mode. Train the next N models that follow this flag.
-    parser.add_argument('-t', action='store_true')
-    # Load mode. Load the next N models that follow this flag from the working directory.
-    parser.add_argument('-l', action='append', nargs='+')
-    # Evaluate model. Evaluate the next N models that follow this flag.
-    parser.add_argument('-e', action='append', nargs='+')
-    # Train and save mode. Train the next N models that follow this flag and save each.
-    parser.add_argument('-ts', action='store_true')
+    parser.add_argument('-v', action='store_true',
+                        help='Verbose mode. Display loss graphs, precision graphs, confusion matrices etc')
+    parser.add_argument('-t', action='append', nargs='+', type=str,
+                        help='Training mode. Train the next N models that follow this flag.')
+    parser.add_argument('-l', action='append', nargs='+', type=str,
+                        help='Load mode. Load the next N models that follow this flag from the working directory.')
+    parser.add_argument('-e', action='append', nargs='+', type=str,
+                        help='Evaluate model. Evaluate the next N models that follow this flag.')
+    parser.add_argument('-ts', action='store_true',
+                        help='Train and save mode. Train the next N models that follow this flag and save each.')
 
     args = parser.parse_args()
     argc = len(sys.argv)
-
-    print(f'{args.v=}, {args.l=}, {args.e=}, {args.ts=}, {argc=}')
 
     if argc != 0 and sys.argv[0] == '-l':
         training = False
