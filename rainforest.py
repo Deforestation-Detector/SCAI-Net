@@ -35,15 +35,17 @@ def main():
     model_dict = dict()
     arg_dict = vars(args)
 
-    for arg in arg_dict:
-        # ignore the verbose argument 
-        if arg == 'v':
-            continue
-        # for each list argument, set the corresponding boolean to True
-        for arch in arg_dict[arg].pop():
-            if arch not in model_dict:
-                model_dict[arch] = dict()
-            model_dict[arch][arg] = True
+    if argc > 1:
+        # create dictionary storing model functionality when the script is run
+        for arg in arg_dict:
+            # ignore arguments that do not switch on functionality for model
+            if arg in ['v']:
+                continue
+            # for each list argument, set the corresponding boolean to True
+            for arch in arg_dict[arg].pop():
+                if arch not in model_dict:
+                    model_dict[arch] = dict()
+                model_dict[arch][arg] = True
 
     train_dataframe = pd.read_csv('data/train_v2.csv').astype(str)
     train_dataframe['image_name'] += '.jpg'
