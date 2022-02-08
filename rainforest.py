@@ -64,7 +64,8 @@ def main():
                         model_dict[model_name] = dict()
                     model_dict[model_name][arg] = True
 
-    print(f'{model_dict=}') # should be printed during verbose mode
+    if args.v:
+        print(f'{model_dict=}') # should be printed during verbose mode
 
     # build dataframe containing training data
     train_dataframe = pd.read_csv('data/train_v2.csv').astype(str)
@@ -76,7 +77,9 @@ def main():
     mlb = MultiLabelBinarizer()
     mlb.fit(train_dataframe["tags"].str.split(" "))
     classes = mlb.classes_
-    print(f'{classes=}') # should be printed during verbose mode
+
+    if args.v:
+        print(f'{classes=}') # should be printed during verbose mode
 
     ids = pd.DataFrame(mlb.fit_transform(train_dataframe['tags'].str.split(' ')), columns = classes)
 
@@ -85,7 +88,8 @@ def main():
 
     train_dg, val_dg = su.create_data(train_df, classes)
 
-    print(f'train_df.head =\n{train_df.head(n = 5)}') # should be printed during verbose mode
+    if args.v:
+        print(f'train_df.head =\n{train_df.head(n = 5)}') # should be printed during verbose mode
 
     # compute operations on models specified at the command line
     for model_name in model_dict:
@@ -141,6 +145,7 @@ def main():
             su.plot_history(history_df, ('Precision', 'precision'))
             model_list.append(model)
         else:
+            # model is not being trained
             # if the model is being evaluated, load it from ./checkpoints
             if is_loaded:
                 model = tf.keras.models.load_model(CHECKPOINT_PATH + model_name + '/')
@@ -154,7 +159,8 @@ def main():
             # su.eyeTestPredictions(model, val_dg, classes)
 
             # confusion_matrices = su.confusionMatrices(model_list, val_dg)
-            print(f'{model_list=}')
+            if args.v:
+                print(f'{model_list=}')
             confusion_matrix = su.ensembleConfusion(model_list, val_dg)
             su.plotEnsembleConfusion(confusion_matrix, classes)
             # su.plotConfusionMatrices(confusion_matrices, classes)
