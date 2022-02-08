@@ -35,8 +35,8 @@ def main():
     args = parser.parse_args()
     arg_dict = vars(args)
 
-    # we might want to switch to constructing separate lists for each argument 
-    # accepting lists of models for clarity.
+    # initialize model dictionary, this wills store booleans for which 
+    # operations will be performed on each model
     model_dict = dict()
 
     # parse command line arguments
