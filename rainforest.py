@@ -11,7 +11,7 @@ MODEL_BATCH_SIZE = 32
 EPOCHS = 3
 CHECKPOINT_PATH = 'checkpoints/'
 ARCH = 'ResNet50V2'
-MODELS = []
+# MODELS = []
 
 def main():
 
@@ -26,14 +26,32 @@ def main():
                         help='Load mode. Load the next N models that follow this flag from the working directory.')
     parser.add_argument('-e', action='append', nargs='+', type=str,
                         help='Evaluate model. Evaluate the next N models that follow this flag.')
-    parser.add_argument('-ts', action='store_true',
+    parser.add_argument('-ts', action='append', nargs='+', type=str,
                         help='Train and save mode. Train the next N models that follow this flag and save each.')
 
-    # args = parser.parse_args()
-    argc = len(sys.argv)
 
-    if argc != 0 and sys.argv[0] == '-l':
-        training = False
+    args = parser.parse_args()
+    argc = len(sys.argv)
+    model_dict = dict()
+    for arch in args.l.pop():
+        is_training = False
+        is_evaluated = False
+        is_saved = False
+
+        # fetch the model from disk
+        model = tf.keras.models.load_model(CHECKPOINT_PATH + arch + '/')
+        
+        if arch in args.t.pop():
+            is_training = True
+        if arch in args.e.pop():
+            is_evaluated = True
+        if arch in args.ts.pop():
+            is_training = True
+            is_saved = True
+            
+        # store model information and whether its training, evalutated, saved.
+        model_dict[arch] = (model, is_training, is_evaluated, is_saved)
+
     train_dataframe = pd.read_csv('data/train_v2.csv').astype(str)
     train_dataframe['image_name'] += '.jpg'
     su.set_NLABELS(train_dataframe)
@@ -41,7 +59,8 @@ def main():
     mlb = MultiLabelBinarizer()
     mlb.fit(train_dataframe["tags"].str.split(" "))
 
-    classes = [f"{c}" for c in mlb.classes_]
+    print(f'{mlb.classes_=}')
+    classes = mlb.classes_
 
     ids = pd.DataFrame(mlb.fit_transform(train_dataframe['tags'].str.split(' ')), columns = classes)
 
