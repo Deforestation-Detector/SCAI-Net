@@ -33,24 +33,17 @@ def main():
     args = parser.parse_args()
     argc = len(sys.argv)
     model_dict = dict()
-    for arch in args.l.pop():
-        is_training = False
-        is_evaluated = False
-        is_saved = False
+    arg_dict = vars(args)
 
-        # fetch the model from disk
-        model = tf.keras.models.load_model(CHECKPOINT_PATH + arch + '/')
-        
-        if arch in args.t.pop():
-            is_training = True
-        if arch in args.e.pop():
-            is_evaluated = True
-        if arch in args.ts.pop():
-            is_training = True
-            is_saved = True
-            
-        # store model information and whether its training, evalutated, saved.
-        model_dict[arch] = (model, is_training, is_evaluated, is_saved)
+    for arg in arg_dict:
+        # ignore the verbose argument 
+        if arg == 'v':
+            continue
+        # for each list argument, set the corresponding boolean to True
+        for arch in arg_dict[arg].pop():
+            if arch not in model_dict:
+                model_dict[arch] = dict()
+            model_dict[arch][arg] = True
 
     train_dataframe = pd.read_csv('data/train_v2.csv').astype(str)
     train_dataframe['image_name'] += '.jpg'
@@ -70,49 +63,52 @@ def main():
     train_dg, val_dg = su.create_data(train_df, classes)
 
     print(f'train_df.head =\n{train_df.head(n = 5)}')
-    model = None
 
-    if training:
-        model = su.create_transfer_model(ARCH)
-        su.compile_model(model)
+    for model_struct in model_dict:
+        model, is_training, is_evaluated, is_saved = model_struct
 
-        if os.path.isdir(CHECKPOINT_PATH) == False:
-            os.mkdir(CHECKPOINT_PATH)
+        if is_training:
 
-        val_loss_checkpoint = tf.keras.callbacks.ModelCheckpoint(
-            filepath=CHECKPOINT_PATH + ARCH + '/',
-            monitor='val_loss',
-            mode='min',
-            save_best_only=True,
-        )
+            model = su.create_transfer_model(ARCH)
+            su.compile_model(model)
 
-        history = model.fit(train_dg,
-            epochs = EPOCHS,
-            callbacks = [val_loss_checkpoint],
-            batch_size = MODEL_BATCH_SIZE,
-            validation_data = val_dg,
-            verbose = 1
-        )
-        
-        history_df = pd.DataFrame(history.history)
-        history_df.head(n = 5)
+            if os.path.isdir(CHECKPOINT_PATH) == False:
+                os.mkdir(CHECKPOINT_PATH)
 
-        su.plot_history(history_df, ('Loss', 'loss'))
-        su.plot_history(history_df, ('Precision', 'precision'))
-        MODELS.append(('Transfer', model))
-    else:
-        model = tf.keras.models.load_model(CHECKPOINT_PATH + ARCH + '/')
-        MODELS.append(('Transfer', model))
-        # precisions = su.evalModels(MODELS, val_dg)
-        # for model_name in precisions:
-        #     print(f"{model_name}'s precision is {precisions[model_name]:.6f}")
+            val_loss_checkpoint = tf.keras.callbacks.ModelCheckpoint(
+                filepath=CHECKPOINT_PATH + ARCH + '/',
+                monitor='val_loss',
+                mode='min',
+                save_best_only=True,
+            )
 
-    # su.eyeTestPredictions(model, val_dg, classes)
+            history = model.fit(train_dg,
+                epochs = EPOCHS,
+                callbacks = [val_loss_checkpoint],
+                batch_size = MODEL_BATCH_SIZE,
+                validation_data = val_dg,
+                verbose = 1
+            )
+            
+            history_df = pd.DataFrame(history.history)
+            history_df.head(n = 5)
 
-    # confusion_matrices = su.confusionMatrices(MODELS, val_dg)
-    confusion_matrix = su.ensembleConfusion(MODELS, val_dg)
-    su.plotEnsembleConfusion(confusion_matrix, classes)
-    # su.plotConfusionMatrices(confusion_matrices, classes)
+            su.plot_history(history_df, ('Loss', 'loss'))
+            su.plot_history(history_df, ('Precision', 'precision'))
+            MODELS.append(('Transfer', model))
+        else:
+            model = tf.keras.models.load_model(CHECKPOINT_PATH + ARCH + '/')
+            MODELS.append(('Transfer', model))
+            # precisions = su.evalModels(MODELS, val_dg)
+            # for model_name in precisions:
+            #     print(f"{model_name}'s precision is {precisions[model_name]:.6f}")
+
+        # su.eyeTestPredictions(model, val_dg, classes)
+
+        # confusion_matrices = su.confusionMatrices(MODELS, val_dg)
+        confusion_matrix = su.ensembleConfusion(MODELS, val_dg)
+        su.plotEnsembleConfusion(confusion_matrix, classes)
+        # su.plotConfusionMatrices(confusion_matrices, classes)
 
 # %%
 if __name__ == "__main__":
