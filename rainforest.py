@@ -13,20 +13,25 @@ CHECKPOINT_PATH = 'checkpoints/'
 
 def main():
 
+    model_choices = ['Xception', 'ResNet50V2', 'VGG16', 'VGG19', 'MobileNetV2']
     parser = argparse.ArgumentParser()
     parser.add_argument('-v', action='store_true',
                         help='Verbose mode. Display loss graphs, precision'
                         ' graphs, confusion matrices etc')
-    parser.add_argument('-t', action='append', nargs='+', type=str,
+    parser.add_argument('-t', action='append', nargs='+', type=str, 
+                        choices=model_choices,
                         help='Training mode. Train the next N models that'
                         ' follow this flag.')
     parser.add_argument('-l', action='append', nargs='+', type=str,
+                        choices=model_choices,
                         help='Load mode. Load the next N models that follow'
                         ' this flag from the working directory.')
     parser.add_argument('-e', action='append', nargs='+', type=str,
+                        choices=model_choices,
                         help='Evaluate model. Evaluate the next N models that'
                         ' follow this flag.')
     parser.add_argument('-ts', action='append', nargs='+', type=str,
+                        choices=model_choices,
                         help='Train and save mode. Train the next N models that'
                         ' follow this flag and save each.')
 
@@ -83,18 +88,13 @@ def main():
 
         # parse model_dict booleans for the current model
         for operation in model_dict[model_name]:
-            if operation == 't':
-                is_training = True
-            elif operation == 'l':
-                is_loaded = True
-            elif operation == 'e':
-                is_evaluated = True
-            elif operation == 'ts':
-                is_training = True
-                is_saved = True
+            is_training = True if operation == 't' else False
+            is_loaded = True if operation == 'l' else False
+            is_evaluated = True if operation == 'e' else False
+            is_training, is_saved = (True, True) if operation == 'ts' else (False, False)
 
-        # initialize model list for evaluation
-        model_list = None
+        # initialize model list. Used for model evaluation
+        model_list = []
 
         if is_training:
             # initialize the transfer learning model
@@ -105,21 +105,25 @@ def main():
             if os.path.isdir(CHECKPOINT_PATH) == False:
                 os.mkdir(CHECKPOINT_PATH)
 
-            # construct model checkpoint object. during training, this saves the 
-            # model weights at when the current weights are better than the 
-            # previously saved weights. optimal weights at the current timestep 
-            # are evaluated using validation loss.
-            val_loss_checkpoint = tf.keras.callbacks.ModelCheckpoint(
-                filepath=CHECKPOINT_PATH + model_name + '/',
-                monitor='val_loss',
-                mode='min',
-                save_best_only=True,
-            )
+            if is_saved:
+                # construct model checkpoint object. during training, this saves 
+                # the model weights at when the current weights are better than 
+                # the previously saved weights. optimal weights at the current 
+                # timestep are evaluated using validation loss.
+                val_loss_checkpoint = tf.keras.callbacks.ModelCheckpoint(
+                    filepath=CHECKPOINT_PATH + model_name + '/',
+                    monitor='val_loss',
+                    mode='min',
+                    save_best_only=True,
+                )
+                callbacks = [val_loss_checkpoint]
+            else:
+                callbacks = []
 
             # train model on dataset and use the checkpoint object
             history = model.fit(train_dg,
                 epochs = EPOCHS,
-                callbacks = [val_loss_checkpoint],
+                callbacks = callbacks,
                 batch_size = MODEL_BATCH_SIZE,
                 validation_data = val_dg,
                 verbose = 1
@@ -133,19 +137,22 @@ def main():
             model_list.append(model)
         else:
             # if the model is being evaluated, load it from ./checkpoints
-            model = tf.keras.models.load_model(CHECKPOINT_PATH + model_name + '/')
-            model_list.append(model)
+            if is_loaded:
+                model = tf.keras.models.load_model(CHECKPOINT_PATH + model_name + '/')
+                model_list.append(model)
 
             # precisions = su.evalModels(model_list, val_dg)
             # for model_name in precisions:
             #     print(f"{model_name}'s precision is {precisions[model_name]:.6f}")
 
-        # su.eyeTestPredictions(model, val_dg, classes)
+        if is_evaluated:
+            # su.eyeTestPredictions(model, val_dg, classes)
 
-        # confusion_matrices = su.confusionMatrices(model_list, val_dg)
-        confusion_matrix = su.ensembleConfusion(model_list, val_dg)
-        su.plotEnsembleConfusion(confusion_matrix, classes)
-        # su.plotConfusionMatrices(confusion_matrices, classes)
+            # confusion_matrices = su.confusionMatrices(model_list, val_dg)
+            print(f'{model_list=}')
+            confusion_matrix = su.ensembleConfusion(model_list, val_dg)
+            su.plotEnsembleConfusion(confusion_matrix, classes)
+            # su.plotConfusionMatrices(confusion_matrices, classes)
 
 # %%
 if __name__ == "__main__":
