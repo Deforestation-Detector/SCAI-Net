@@ -29,7 +29,7 @@ def main():
     parser.add_argument('-ts', action='store_true',
                         help='Train and save mode. Train the next N models that follow this flag and save each.')
 
-    args = parser.parse_args()
+    # args = parser.parse_args()
     argc = len(sys.argv)
 
     if argc != 0 and sys.argv[0] == '-l':
@@ -84,14 +84,16 @@ def main():
     else:
         model = tf.keras.models.load_model(CHECKPOINT_PATH + ARCH + '/')
         MODELS.append(('Transfer', model))
-        precisions = su.evalModels(MODELS, val_dg)
-        for model_name in precisions:
-            print(f"{model_name}'s precision is {precisions[model_name]:.6f}")
+        # precisions = su.evalModels(MODELS, val_dg)
+        # for model_name in precisions:
+        #     print(f"{model_name}'s precision is {precisions[model_name]:.6f}")
 
-    su.eyeTestPredictions(model, val_dg, classes)
+    # su.eyeTestPredictions(model, val_dg, classes)
 
-    confusion_matrices = su.confusionMatrices(MODELS, val_dg)
-    su.plotConfusionMatrices(confusion_matrices, classes)
+    # confusion_matrices = su.confusionMatrices(MODELS, val_dg)
+    confusion_matrix = su.ensembleConfusion(MODELS, val_dg)
+    su.plotEnsembleConfusion(confusion_matrix, classes)
+    # su.plotConfusionMatrices(confusion_matrices, classes)
 
 # %%
 if __name__ == "__main__":

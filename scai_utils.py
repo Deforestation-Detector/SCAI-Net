@@ -115,7 +115,7 @@ def compile_model(model):
         metrics = [tf.keras.metrics.Precision()]
     )
 # %%
-def create_transer_model(ARCH):
+def create_transfer_model(ARCH):
     base_model = TRANSFER_ARCHITECTURES[ARCH]
     initializer = tf.keras.initializers.HeNormal()
 
@@ -226,6 +226,38 @@ def confusionMatrices(models, dataset):
     
     return confusion_matrices
 # %%
+def ensembleConfusion(models, dataset):
+    cardinality = len(dataset) * VAL_BATCH_SIZE
+    confusion_matrix = np.zeros((N_LABELS, 2, 2)).astype(int)
+
+    i = 0
+    percent_complete = 0
+    percent_increments = 0.1
+    milestone = percent_increments
+    num_models = len(models)
+    for features, labels in dataset:
+        batch_size = labels.shape[0]
+        prob_densities = np.zeros((batch_size, 17))
+
+        for _, model in models:
+            prob_densities += model.predict(features)
+        
+        prob_densities /= num_models
+        y_hat = tf.convert_to_tensor(np.where(prob_densities < 0.5, 0., 1.))
+        confusion_matrix += multilabel_confusion_matrix(labels, y_hat).astype(int)
+        percent_complete += VAL_BATCH_SIZE / cardinality
+
+        i += 1
+
+        if percent_complete > milestone:
+            print(f'{(percent_complete * 100):.0f}% complete')
+            milestone += percent_increments
+        if i > 126:
+            break
+    print(f'100% complete. Confusion matrix calculated.')
+
+    return confusion_matrix
+# %%
 def plotConfusionMatrices(confusion_matrices, classes):
     sqt = math.sqrt(N_LABELS)
     rows, columns = math.ceil(sqt), math.floor(sqt)
@@ -242,3 +274,18 @@ def plotConfusionMatrices(confusion_matrices, classes):
                 fmt='d',
             )
         plt.show()
+# %%
+def plotEnsembleConfusion(confusion_matrix, classes):
+    sqt = math.sqrt(N_LABELS)
+    rows, columns = math.ceil(sqt), math.floor(sqt)
+
+    fig = plt.figure(figsize=(20, 20))
+    for i in range(N_LABELS):
+        fig.add_subplot(rows, columns, i + 1)
+        plt.title(f'{classes[i]}')
+        sns.heatmap(
+            confusion_matrix[i],
+            annot=True,
+            fmt='d',
+        )
+    plt.show()
