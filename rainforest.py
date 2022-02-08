@@ -13,25 +13,28 @@ CHECKPOINT_PATH = 'checkpoints/'
 ARCH = 'ResNet50V2'
 MODELS = []
 
-def main(argv):
+def main():
+
     training = True
-    argc = len(argv)
 
     parser = argparse.ArgumentParser()
-    # debugger mode. Print variables
-    parser.add_argument('-d') 
     # Verbose mode. Display loss graphs, precision graphs, confusion matrices etc
-    parser.add_argument('-v')
+    parser.add_argument('-v', action='store_true')
     # Training mode. Train the next N models that follow this flag.
-    parser.add_argument('-t')
+    parser.add_argument('-t', action='store_true')
     # Load mode. Load the next N models that follow this flag from the working directory.
-    parser.add_argument('-l')
+    parser.add_argument('-l', action='append', nargs='+')
     # Evaluate model. Evaluate the next N models that follow this flag.
-    parser.add_argument('-e')
+    parser.add_argument('-e', action='append', nargs='+')
     # Train and save mode. Train the next N models that follow this flag and save each.
-    parser.add_argument('-ts')
+    parser.add_argument('-ts', action='store_true')
 
-    if argc != 0 and argv[0] == '-l':
+    args = parser.parse_args()
+    argc = len(sys.argv)
+
+    print(f'{args.v=}, {args.l=}, {args.e=}, {args.ts=}, {argc=}')
+
+    if argc != 0 and sys.argv[0] == '-l':
         training = False
     train_dataframe = pd.read_csv('data/train_v2.csv').astype(str)
     train_dataframe['image_name'] += '.jpg'
@@ -94,4 +97,4 @@ def main(argv):
 
 # %%
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()
