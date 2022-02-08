@@ -58,7 +58,7 @@ def main():
                 continue
             # for each list argument, if the model was listed, set the 
             # corresponding value to True
-            print(f'{arg.split = }')
+
             if arg_dict[arg] != None:
                 for model_name in arg_dict[arg].pop():
                     if model_name not in model_dict:
@@ -90,22 +90,25 @@ def main():
 
     train_dg, val_dg = su.create_data(train_df, classes)
 
+    model_list = []
+
     if args.v:
         print(f'train_df.head =\n{train_df.head(n = 5)}') # should be printed during verbose mode
 
     # compute operations on models specified at the command line
     for model_name in model_dict:
+        if args.v:
+            print(f'Current architecture: {model_name}')
         is_training, is_loaded, is_evaluated, is_training = False, False, False, False
 
         # parse model_dict booleans for the current model
         for operation in model_dict[model_name]:
             if operation == 't': is_training = True
-            if operation == 'l': is_loaded = True
             if operation == 'e': is_evaluated = True
             if operation == 's': is_saved = True
+            if operation == 'l': is_loaded = True
 
         # initialize model list. Used for model evaluation
-        model_list = []
 
         if is_training:
             # initialize the transfer learning model
@@ -140,31 +143,28 @@ def main():
             )
             
             # plot the model training history 
-            history_df = pd.DataFrame(history.history)
-            history_df.head(n = 5)
-            su.plot_history(history_df, ('Loss', 'loss'))
-            su.plot_history(history_df, ('Precision', 'precision'))
+            if is_evaluated:
+                history_df = pd.DataFrame(history.history)
+                history_df.head(n = 5)
+                su.plot_history(history_df, ('Loss', 'loss'))
+                su.plot_history(history_df, ('Precision', 'precision'))
             model_list.append(model)
-        else:
-            # model is not being trained
-            # if the model is being evaluated, load it from ./checkpoints
-            if is_loaded:
-                model = tf.keras.models.load_model(CHECKPOINT_PATH + model_name + '/')
-                model_list.append(model)
+        elif is_loaded:
+            model = tf.keras.models.load_model(CHECKPOINT_PATH + model_name + '/')
+            model_list.append(model)
 
-            # precisions = su.evalModels(model_list, val_dg)
-            # for model_name in precisions:
-            #     print(f"{model_name}'s precision is {precisions[model_name]:.6f}")
+            if is_evaluated:
+                if args.v:
+                    model.evaluate(val_dg)
 
-        if is_evaluated:
-            # su.eyeTestPredictions(model, val_dg, classes)
+                su.eyeTestPredictions(model, val_dg, classes)
 
-            # confusion_matrices = su.confusionMatrices(model_list, val_dg)
-            if args.v:
-                print(f'{model_list=}')
-            confusion_matrix = su.ensembleConfusion(model_list, val_dg)
-            su.plotEnsembleConfusion(confusion_matrix, classes)
-            # su.plotConfusionMatrices(confusion_matrices, classes)
+    # confusion_matrices = su.confusionMatrices(model_list, val_dg)
+    print(f'{model_list = }')
+    
+    confusion_matrix = su.ensembleConfusion(model_list, val_dg)
+    su.plotEnsembleConfusion(confusion_matrix, classes)
+    # su.plotConfusionMatrices(confusion_matrices, classes)
 
 # %%
 if __name__ == "__main__":

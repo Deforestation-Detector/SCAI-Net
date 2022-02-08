@@ -187,15 +187,6 @@ def eyeTestPredictions(model, datagen, classes):
 
     plt.show()
 # %%
-def evalModels(models, dataset):
-    precisions = {}
-    for model_name, model in models:
-        print(f"evaluating {model_name}: ")
-        _, model_precision = model.evaluate(dataset)
-        precisions[model_name] = model_precision
-    
-    return precisions
-# %%
 def confusionMatrices(models, dataset):
     confusion_matrices = {}
 
