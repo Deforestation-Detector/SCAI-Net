@@ -1,3 +1,4 @@
+from ast import parse
 import os
 import pandas as pd
 import tensorflow as tf
@@ -17,8 +18,17 @@ def main(argv):
     argc = len(argv)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-l')
+    # debugger mode. Print variables
+    parser.add_argument('-d') 
+    # Verbose mode. Display loss graphs, precision graphs, confusion matrices etc
+    parser.add_argument('-v')
+    # Training mode. Train the next N models that follow this flag.
     parser.add_argument('-t')
+    # Load mode. Load the next N models that follow this flag from the working directory.
+    parser.add_argument('-l')
+    # Evaluate model. Evaluate the next N models that follow this flag.
+    parser.add_argument('-e')
+    # Train and save mode. Train the next N models that follow this flag and save each.
     parser.add_argument('-ts')
 
     if argc != 0 and argv[0] == '-l':
