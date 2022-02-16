@@ -1,3 +1,5 @@
+[![autopep8](https://github.com/Deforestation-Detector/SCAI-Net/actions/workflows/autopep8.yml/badge.svg)](https://github.com/Deforestation-Detector/SCAI-Net/actions/workflows/autopep8.yml)
+
 # TODO
 * kill the ender dragon
 * pop off
