@@ -10,6 +10,7 @@ MODEL_BATCH_SIZE = 32
 EPOCHS = 3
 CHECKPOINT_PATH = 'checkpoints/'
 
+
 def main():
 
     model_choices = ['Xception', 'ResNet50V2', 'VGG16', 'VGG19', 'MobileNetV2']
@@ -17,7 +18,7 @@ def main():
     parser.add_argument('-v', action='store_true',
                         help='Verbose mode. Display loss graphs, precision'
                         ' graphs, confusion matrices etc')
-    parser.add_argument('-t', action='append', nargs='+', type=str, 
+    parser.add_argument('-t', action='append', nargs='+', type=str,
                         choices=model_choices,
                         help='Training mode. Train the next N models that'
                         ' follow this flag.')
@@ -29,21 +30,29 @@ def main():
                         choices=model_choices,
                         help='Evaluate model. Evaluate the next N models that'
                         ' follow this flag.')
-    parser.add_argument('-ts', action='append', nargs='+', type=str,
-                        choices=model_choices,
-                        help='Train and save mode. Train the next N models that'
-                        ' follow this flag and save each.')
-    parser.add_argument('-le', action='append', nargs='+', type=str,
-                        choices=model_choices,
-                        help='Load and evaluate mode. Load and evaluate the next N models that'
-                        ' follow this flag.')
+    parser.add_argument(
+        '-ts',
+        action='append',
+        nargs='+',
+        type=str,
+        choices=model_choices,
+        help='Train and save mode. Train the next N models that'
+        ' follow this flag and save each.')
+    parser.add_argument(
+        '-le',
+        action='append',
+        nargs='+',
+        type=str,
+        choices=model_choices,
+        help='Load and evaluate mode. Load and evaluate the next N models that'
+        ' follow this flag.')
 
     # get the number of arguments and construct the argument namespace object
     argc = len(sys.argv)
     args = parser.parse_args()
     arg_dict = vars(args)
 
-    # initialize model dictionary, this wills store booleans for which 
+    # initialize model dictionary, this wills store booleans for which
     # operations will be performed on each model
     model_dict = dict()
 
@@ -55,10 +64,10 @@ def main():
             # add them to this list
             if arg in ['v']:
                 continue
-            # for each list argument, if the model was listed, set the 
+            # for each list argument, if the model was listed, set the
             # corresponding value to True
 
-            if arg_dict[arg] != None:
+            if arg_dict[arg] is not None:
                 for model_name in arg_dict[arg].pop():
                     if model_name not in model_dict:
                         model_dict[model_name] = dict()
@@ -66,32 +75,36 @@ def main():
                         model_dict[model_name][flag] = True
 
     if args.v:
-        print(f'{model_dict=}') # should be printed during verbose mode
+        print(f'{model_dict=}')  # should be printed during verbose mode
 
     # build dataframe containing training data
     train_dataframe = pd.read_csv('data/train_v2.csv').astype(str)
     train_dataframe['image_name'] += '.jpg'
     su.set_NLABELS(train_dataframe)
 
-    # since our task is multilabel classification, we must construct a multi 
+    # since our task is multilabel classification, we must construct a multi
     # label binarizer to binarize each of the different labels
     mlb = MultiLabelBinarizer()
     mlb.fit(train_dataframe["tags"].str.split(" "))
     classes = mlb.classes_
 
     if args.v:
-        print(f'{type(classes) = }') # should be printed during verbose mode
+        print(f'{type(classes) = }')  # should be printed during verbose mode
 
-    ids = pd.DataFrame(mlb.fit_transform(train_dataframe['tags'].str.split(' ')), columns = classes)
+    ids = pd.DataFrame(
+        mlb.fit_transform(
+            train_dataframe['tags'].str.split(' ')),
+        columns=classes)
 
-    train_df = pd.concat( [train_dataframe[['image_name']], ids], axis=1 )
+    train_df = pd.concat([train_dataframe[['image_name']], ids], axis=1)
     train_dataframe = None
 
     train_dg, val_dg = su.create_data(train_df, classes)
     model_list = []
 
     if args.v:
-        print(f'train_df.head =\n{train_df.head(n = 5)}') # should be printed during verbose mode
+        # should be printed during verbose mode
+        print(f'train_df.head =\n{train_df.head(n = 5)}')
 
     # compute operations on models specified at the command line
     for model_name in model_dict:
@@ -101,10 +114,14 @@ def main():
 
         # parse model_dict booleans for the current model
         for operation in model_dict[model_name]:
-            if operation == 't': is_training = True
-            if operation == 'e': is_evaluated = True
-            if operation == 's': is_saved = True
-            if operation == 'l': is_loaded = True
+            if operation == 't':
+                is_training = True
+            if operation == 'e':
+                is_evaluated = True
+            if operation == 's':
+                is_saved = True
+            if operation == 'l':
+                is_loaded = True
 
         # initialize model list. Used for model evaluation
 
@@ -119,9 +136,9 @@ def main():
 
             callbacks = []
             if is_saved:
-                # construct model checkpoint object. during training, this saves 
-                # the model weights at when the current weights are better than 
-                # the previously saved weights. optimal weights at the current 
+                # construct model checkpoint object. during training, this saves
+                # the model weights at when the current weights are better than
+                # the previously saved weights. optimal weights at the current
                 # timestep are evaluated using validation loss.
                 val_loss_checkpoint = tf.keras.callbacks.ModelCheckpoint(
                     filepath=CHECKPOINT_PATH + model_name + '/',
@@ -133,22 +150,23 @@ def main():
 
             # train model on dataset and use the checkpoint object
             history = model.fit(train_dg,
-                epochs = EPOCHS,
-                callbacks = callbacks,
-                batch_size = MODEL_BATCH_SIZE,
-                validation_data = val_dg,
-                verbose = 1
-            )
-            
-            # plot the model training history 
+                                epochs=EPOCHS,
+                                callbacks=callbacks,
+                                batch_size=MODEL_BATCH_SIZE,
+                                validation_data=val_dg,
+                                verbose=1
+                                )
+
+            # plot the model training history
             if is_evaluated:
                 history_df = pd.DataFrame(history.history)
-                history_df.head(n = 5)
+                history_df.head(n=5)
                 su.plot_history(history_df, ('Loss', 'loss'))
                 su.plot_history(history_df, ('Precision', 'precision'))
             model_list.append(model)
         elif is_loaded:
-            model = tf.keras.models.load_model(CHECKPOINT_PATH + model_name + '/')
+            model = tf.keras.models.load_model(
+                CHECKPOINT_PATH + model_name + '/')
             model_list.append(model)
 
             if is_evaluated:
@@ -159,10 +177,11 @@ def main():
 
     # confusion_matrices = su.confusionMatrices(model_list, val_dg)
     print(f'{model_list = }')
-    
+
     confusion_matrix = su.ensembleConfusion(model_list, val_dg)
     su.plotEnsembleConfusion(confusion_matrix, classes)
     # su.plotConfusionMatrices(confusion_matrices, classes)
+
 
 # %%
 if __name__ == "__main__":

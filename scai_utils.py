@@ -20,12 +20,18 @@ THRESHOLD = 0.5
 N_LABELS = None
 
 TRANSFER_ARCHITECTURES = {
-    'Xception': Xception(weights='imagenet', include_top=False, input_shape=(256, 256, 3)),
-    'ResNet50V2': ResNet50V2(weights='imagenet', include_top=False, input_shape=(256, 256, 3)),
-    'VGG16': VGG16(weights='imagenet', include_top=False, input_shape=(256, 256, 3)),
-    'VGG19': VGG19(weights='imagenet', include_top=False, input_shape=(256, 256, 3)),
-    'MobileNetV2': MobileNetV2(weights='imagenet', include_top=False, input_shape=(256, 256, 3)),
-}
+    'Xception': Xception(
+        weights='imagenet', include_top=False, input_shape=(
+            256, 256, 3)), 'ResNet50V2': ResNet50V2(
+                weights='imagenet', include_top=False, input_shape=(
+                    256, 256, 3)), 'VGG16': VGG16(
+                        weights='imagenet', include_top=False, input_shape=(
+                            256, 256, 3)), 'VGG19': VGG19(
+                                weights='imagenet', include_top=False, input_shape=(
+                                    256, 256, 3)), 'MobileNetV2': MobileNetV2(
+                                        weights='imagenet', include_top=False, input_shape=(
+                                            256, 256, 3)), }
+
 
 def set_NLABELS(train_dataframe: pd.DataFrame) -> None:
     global N_LABELS
@@ -39,84 +45,91 @@ def set_NLABELS(train_dataframe: pd.DataFrame) -> None:
 
     N_LABELS = len(unique_labels)
 
-def create_data(train_df: pd.DataFrame, classes: np.ndarray) -> "tuple[tf.keras.preprocessing.image.ImageDataGenerator]":
+
+def create_data(
+        train_df: pd.DataFrame,
+        classes: np.ndarray) -> "tuple[tf.keras.preprocessing.image.ImageDataGenerator]":
     datagen = tf.keras.preprocessing.image.ImageDataGenerator(
-        rotation_range = 45,
+        rotation_range=45,
         # width_shift_range = 0.15,
         # height_shift_range = 0.15,
         # channel_shift_range = 0.5
         # brightness_range = (0.2, 0.7),
         # shear_range = 0.2,
-        horizontal_flip = True,
-        vertical_flip = True,
-        validation_split = 0.2,
-        rescale = 1/255
+        horizontal_flip=True,
+        vertical_flip=True,
+        validation_split=0.2,
+        rescale=1 / 255
     )
 
     train_dg = datagen.flow_from_dataframe(
         train_df,
-        directory = './data/train-jpg/',
-        x_col = 'image_name',
-        y_col = classes,
-        class_mode = 'raw',
-        subset = 'training',
-        validate_filenames = False,
-        batch_size = TRAIN_BATCH_SIZE,
-        shuffle = True,
+        directory='./data/train-jpg/',
+        x_col='image_name',
+        y_col=classes,
+        class_mode='raw',
+        subset='training',
+        validate_filenames=False,
+        batch_size=TRAIN_BATCH_SIZE,
+        shuffle=True,
     )
 
     val_dg = datagen.flow_from_dataframe(
         train_df,
-        directory = './data/train-jpg/',
-        x_col = 'image_name',
-        y_col = classes,
-        class_mode = 'raw',
-        subset = 'validation',
-        validate_filenames = False,
-        batch_size = VAL_BATCH_SIZE,
-        shuffle = True,
+        directory='./data/train-jpg/',
+        x_col='image_name',
+        y_col=classes,
+        class_mode='raw',
+        subset='validation',
+        validate_filenames=False,
+        batch_size=VAL_BATCH_SIZE,
+        shuffle=True,
     )
 
     print(f'{train_dg = }')
 
     return train_dg, val_dg
 
+
 def f1(y_true: tf.constant, y_pred: tf.constant) -> tf.constant:
     y_pred = Kb.round(y_pred)
-    tp = Kb.sum(Kb.cast(y_true*y_pred, 'float'), axis=0)
-    tn = Kb.sum(Kb.cast((1-y_true)*(1-y_pred), 'float'), axis=0)
-    fp = Kb.sum(Kb.cast((1-y_true)*y_pred, 'float'), axis=0)
-    fn = Kb.sum(Kb.cast(y_true*(1-y_pred), 'float'), axis=0)
+    tp = Kb.sum(Kb.cast(y_true * y_pred, 'float'), axis=0)
+    tn = Kb.sum(Kb.cast((1 - y_true) * (1 - y_pred), 'float'), axis=0)
+    fp = Kb.sum(Kb.cast((1 - y_true) * y_pred, 'float'), axis=0)
+    fn = Kb.sum(Kb.cast(y_true * (1 - y_pred), 'float'), axis=0)
 
     p = tp / (tp + fp + Kb.epsilon())
     r = tp / (tp + fn + Kb.epsilon())
 
-    f1 = 2*p*r / (p+r+Kb.epsilon())
+    f1 = 2 * p * r / (p + r + Kb.epsilon())
     f1 = tf.where(tf.math.is_nan(f1), tf.zeros_like(f1), f1)
     return Kb.mean(f1)
 
+
 def f1_loss(y_true: tf.constant, y_pred: tf.constant) -> tf.constant:
-    
-    tp = Kb.sum(Kb.cast(y_true*y_pred, 'float'), axis=0)
-    tn = Kb.sum(Kb.cast((1-y_true)*(1-y_pred), 'float'), axis=0)
-    fp = Kb.sum(Kb.cast((1-y_true)*y_pred, 'float'), axis=0)
-    fn = Kb.sum(Kb.cast(y_true*(1-y_pred), 'float'), axis=0)
+
+    tp = Kb.sum(Kb.cast(y_true * y_pred, 'float'), axis=0)
+    tn = Kb.sum(Kb.cast((1 - y_true) * (1 - y_pred), 'float'), axis=0)
+    fp = Kb.sum(Kb.cast((1 - y_true) * y_pred, 'float'), axis=0)
+    fn = Kb.sum(Kb.cast(y_true * (1 - y_pred), 'float'), axis=0)
 
     p = tp / (tp + fp + Kb.epsilon())
     r = tp / (tp + fn + Kb.epsilon())
 
-    f1 = 2*p*r / (p+r+Kb.epsilon())
+    f1 = 2 * p * r / (p + r + Kb.epsilon())
     f1 = tf.where(tf.math.is_nan(f1), tf.zeros_like(f1), f1)
     return 1 - Kb.mean(f1)
+
 
 def compile_model(model: tf.keras.Model) -> None:
     opt = tf.keras.optimizers.Adam(learning_rate=1e-4)
 
     model.compile(
-        loss = tf.keras.losses.BinaryCrossentropy(),
-        optimizer = opt,
-        metrics = [tf.keras.metrics.Precision()]
+        loss=tf.keras.losses.BinaryCrossentropy(),
+        optimizer=opt,
+        metrics=[tf.keras.metrics.Precision()]
     )
+
 
 def create_transfer_model(ARCH: str) -> tf.keras.Model:
     base_model = TRANSFER_ARCHITECTURES[ARCH]
@@ -138,12 +151,13 @@ def create_transfer_model(ARCH: str) -> tf.keras.Model:
     transfer_model.add(BatchNormalization())
     transfer_model.add(Activation('relu'))
 
-    transfer_model.add(Dense(N_LABELS, activation = Activation('sigmoid')))
+    transfer_model.add(Dense(N_LABELS, activation=Activation('sigmoid')))
 
     return transfer_model
 
+
 def plot_history(history_df: pd.DataFrame, y: tf.constant) -> None:
-    plt.figure(figsize=(10,8))
+    plt.figure(figsize=(10, 8))
 
     plt.title(f"{y[0]} over time")
     plt.xlabel('Epochs')
@@ -154,13 +168,20 @@ def plot_history(history_df: pd.DataFrame, y: tf.constant) -> None:
     plt.legend(loc='upper right')
     plt.show()
 
+
 def reverseHot(label_numpy: np.ndarray, classes: 'list[str]') -> 'list[str]':
     label = []
     for i in label_numpy:
         label.append(classes[i])
     return ' '.join(label)
 
-def displayGridItem(idx: int, X: tf.data.Dataset, y: tf.data.Dataset, prediction: str, classes: 'list[str]') -> None:
+
+def displayGridItem(
+        idx: int,
+        X: tf.data.Dataset,
+        y: tf.data.Dataset,
+        prediction: str,
+        classes: 'list[str]') -> None:
     img = tf.cast(X[idx] * 255, tf.uint8)
     # print(f"{img = }")
     indices = tf.where(y[idx] == 1).numpy()
@@ -172,7 +193,11 @@ def displayGridItem(idx: int, X: tf.data.Dataset, y: tf.data.Dataset, prediction
     plt.imshow(img)
     plt.title(f'P: {prediction}\nL: {label}')
 
-def eyeTestPredictions(model: 'tf.keras.Model', datagen: 'tf.keras.preprocessing.image.ImageDataGenerator', classes: 'list[str]') -> None:
+
+def eyeTestPredictions(
+        model: 'tf.keras.Model',
+        datagen: 'tf.keras.preprocessing.image.ImageDataGenerator',
+        classes: 'list[str]') -> None:
     fig = plt.figure(figsize=(20, 15))
     fig.subplots_adjust(hspace=0.8)
     rows, columns = 5, 4
@@ -180,7 +205,10 @@ def eyeTestPredictions(model: 'tf.keras.Model', datagen: 'tf.keras.preprocessing
     for x_batch, y_batch in datagen:
         break
 
-    idx_array = np.random.choice(np.arange(TRAIN_BATCH_SIZE), size=20, replace=False)
+    idx_array = np.random.choice(
+        np.arange(TRAIN_BATCH_SIZE),
+        size=20,
+        replace=False)
     for iter, image_idx in enumerate(idx_array):
         y_hat_probs = model.predict(x_batch)
         prediction_hot = (y_hat_probs[image_idx] > THRESHOLD).nonzero()[0]
@@ -190,7 +218,10 @@ def eyeTestPredictions(model: 'tf.keras.Model', datagen: 'tf.keras.preprocessing
 
     plt.show()
 
-def confusionMatrices(models: 'list[tf.keras.Model]', dataset: tf.data.Dataset) -> dict:
+
+def confusionMatrices(
+        models: 'list[tf.keras.Model]',
+        dataset: tf.data.Dataset) -> dict:
     confusion_matrices = {}
 
     cardinality = len(dataset) * VAL_BATCH_SIZE
@@ -205,8 +236,10 @@ def confusionMatrices(models: 'list[tf.keras.Model]', dataset: tf.data.Dataset) 
         print(f'Obtaining confusion matrix for {model_name}')
         for features, labels in dataset:
             prob_densities = model.predict(features)
-            y_hat = tf.convert_to_tensor(np.where(prob_densities < 0.5, 0., 1.))
-            confuse_matrix = multilabel_confusion_matrix(labels, y_hat).astype(int)
+            y_hat = tf.convert_to_tensor(
+                np.where(prob_densities < 0.5, 0., 1.))
+            confuse_matrix = multilabel_confusion_matrix(
+                labels, y_hat).astype(int)
             confusion_matrices[model_name] += confuse_matrix
             percent_complete += VAL_BATCH_SIZE / cardinality
             i += 1
@@ -217,10 +250,13 @@ def confusionMatrices(models: 'list[tf.keras.Model]', dataset: tf.data.Dataset) 
             if i > 126:
                 break
         print(f'100% complete. Confusion matrix for {model_name} calculated.')
-    
+
     return confusion_matrices
 
-def ensembleConfusion(models: 'list[tf.keras.Model]', dataset: tf.data.Dataset) -> np.ndarray:
+
+def ensembleConfusion(
+        models: 'list[tf.keras.Model]',
+        dataset: tf.data.Dataset) -> np.ndarray:
     cardinality = len(dataset) * VAL_BATCH_SIZE
     confusion_matrix = np.zeros((N_LABELS, 2, 2)).astype(int)
 
@@ -235,10 +271,11 @@ def ensembleConfusion(models: 'list[tf.keras.Model]', dataset: tf.data.Dataset) 
 
         for model in models:
             prob_densities += model.predict(features)
-        
+
         prob_densities /= num_models
         y_hat = tf.convert_to_tensor(np.where(prob_densities < 0.5, 0., 1.))
-        confusion_matrix += multilabel_confusion_matrix(labels, y_hat).astype(int)
+        confusion_matrix += multilabel_confusion_matrix(
+            labels, y_hat).astype(int)
         percent_complete += VAL_BATCH_SIZE / cardinality
 
         i += 1
@@ -252,7 +289,10 @@ def ensembleConfusion(models: 'list[tf.keras.Model]', dataset: tf.data.Dataset) 
 
     return confusion_matrix
 
-def plotConfusionMatrices(confusion_matrices: dict, classes: 'list[str]') -> None:
+
+def plotConfusionMatrices(
+        confusion_matrices: dict,
+        classes: 'list[str]') -> None:
     sqt = math.sqrt(N_LABELS)
     rows, columns = math.ceil(sqt), math.floor(sqt)
 
@@ -269,7 +309,10 @@ def plotConfusionMatrices(confusion_matrices: dict, classes: 'list[str]') -> Non
             )
         plt.show()
 
-def plotEnsembleConfusion(confusion_matrix: np.ndarray, classes: 'list[str]') -> None:
+
+def plotEnsembleConfusion(
+        confusion_matrix: np.ndarray,
+        classes: 'list[str]') -> None:
     sqt = math.sqrt(N_LABELS)
     rows, columns = math.ceil(sqt), math.floor(sqt)
 
