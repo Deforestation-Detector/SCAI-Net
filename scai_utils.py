@@ -1,4 +1,3 @@
-# %%
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -108,6 +107,8 @@ def f1(y_true: tf.constant, y_pred: tf.constant) -> tf.constant:
 
 def f1_loss(y_true: tf.constant, y_pred: tf.constant) -> tf.constant:
 
+    y_true = tf.cast(y_true, tf.float32)
+
     tp = Kb.sum(Kb.cast(y_true * y_pred, 'float'), axis=0)
     tn = Kb.sum(Kb.cast((1 - y_true) * (1 - y_pred), 'float'), axis=0)
     fp = Kb.sum(Kb.cast((1 - y_true) * y_pred, 'float'), axis=0)
@@ -125,7 +126,8 @@ def compile_model(model: tf.keras.Model) -> None:
     opt = tf.keras.optimizers.Adam(learning_rate=1e-4)
 
     model.compile(
-        loss=tf.keras.losses.BinaryCrossentropy(),
+        # loss=tf.keras.losses.BinaryCrossentropy(),
+        loss=f1_loss,
         optimizer=opt,
         metrics=[tf.keras.metrics.Precision()]
     )

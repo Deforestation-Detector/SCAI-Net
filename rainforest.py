@@ -166,7 +166,8 @@ def main():
             model_list.append(model)
         elif is_loaded:
             model = tf.keras.models.load_model(
-                CHECKPOINT_PATH + model_name + '/')
+                CHECKPOINT_PATH + model_name + '/',
+                compile=False)
             model_list.append(model)
 
             if is_evaluated:
