@@ -80,7 +80,7 @@ def main():
     classes = mlb.classes_
 
     if args.v:
-        print(f'{type(classes)=}') # should be printed during verbose mode
+        print(f'{type(classes) = }') # should be printed during verbose mode
 
     ids = pd.DataFrame(mlb.fit_transform(train_dataframe['tags'].str.split(' ')), columns = classes)
 
