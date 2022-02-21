@@ -1,4 +1,3 @@
-from ast import parse
 import os
 import pandas as pd
 import tensorflow as tf
@@ -81,7 +80,7 @@ def main():
     classes = mlb.classes_
 
     if args.v:
-        print(f'{classes=}') # should be printed during verbose mode
+        print(f'{type(classes)=}') # should be printed during verbose mode
 
     ids = pd.DataFrame(mlb.fit_transform(train_dataframe['tags'].str.split(' ')), columns = classes)
 
@@ -89,7 +88,6 @@ def main():
     train_dataframe = None
 
     train_dg, val_dg = su.create_data(train_df, classes)
-
     model_list = []
 
     if args.v:
