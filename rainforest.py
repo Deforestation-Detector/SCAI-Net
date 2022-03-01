@@ -12,7 +12,16 @@ CHECKPOINT_PATH = 'checkpoints/'
 
 
 def main():
-    model_choices = ['Xception', 'ResNet50V2', 'VGG16', 'VGG19', 'MobileNetV2']
+    model_choices = [
+        'Xception',
+        'ResNet50V2',
+        'VGG16',
+        'VGG19',
+        'MobileNetV2',
+        'EfficientNetV2L',
+        'EfficientNetV2M',
+        'EfficientNetB7',
+    ]
     parser = argparse.ArgumentParser()
     parser.add_argument('-v', action='store_true',
                         help='Verbose mode. Display loss graphs, precision'

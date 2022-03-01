@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as Kb
-from tensorflow.keras.applications import ResNet50V2, Xception, VGG16, VGG19, MobileNetV2
+from tensorflow.keras.applications import ResNet50V2, Xception, VGG16, VGG19, MobileNetV2, EfficientNetV2L, EfficientNetV2M, EfficientNetB7
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Input, Dense, BatchNormalization, Activation, Conv2D, MaxPooling2D, Flatten
 from tensorflow.keras.models import Sequential, load_model
 from matplotlib import pyplot as plt
@@ -28,6 +28,15 @@ TRANSFER_ARCHITECTURES = {
                             256, 256, 3)), 'VGG19': VGG19(
                                 weights='imagenet', include_top=False, input_shape=(
                                     256, 256, 3)), 'MobileNetV2': MobileNetV2(
+                                        weights='imagenet', include_top=False, input_shape=(
+                                            256, 256, 3)),
+                                            'EfficientNetV2L': EfficientNetV2L(
+                                        weights='imagenet', include_top=False, input_shape=(
+                                            256, 256, 3)),
+                                            'EfficientNetV2M': EfficientNetV2M(
+                                        weights='imagenet', include_top=False, input_shape=(
+                                            256, 256, 3)),
+                                            'EfficientNetB7': EfficientNetB7(
                                         weights='imagenet', include_top=False, input_shape=(
                                             256, 256, 3)), }
 
