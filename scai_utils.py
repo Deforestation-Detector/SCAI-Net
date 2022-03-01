@@ -58,7 +58,7 @@ def create_data(
         horizontal_flip=True,
         vertical_flip=True,
         validation_split=0.2,
-        rescale=1 / 255
+        rescale=1 / 255,
     )
 
     train_dg = datagen.flow_from_dataframe(
@@ -173,6 +173,7 @@ def plot_history(history_df: pd.DataFrame, y: tf.constant) -> None:
 
 def reverseHot(label_numpy: np.ndarray, classes: 'list[str]') -> 'list[str]':
     label = []
+
     for i in label_numpy:
         label.append(classes[i])
     return ' '.join(label)

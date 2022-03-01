@@ -2,6 +2,7 @@
 /venv
 /neighbors
 /checkpoints
+/tfjs_checkpoints
 /current_weights
 /model
 __pycache__
