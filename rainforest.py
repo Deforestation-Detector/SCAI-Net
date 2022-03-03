@@ -20,12 +20,14 @@ def main():
         'MobileNetV2',
         'EfficientNetV2L',
         'EfficientNetV2M',
-        'EfficientNetB7',
+        'InceptionResNetV2',
     ]
     parser = argparse.ArgumentParser()
     parser.add_argument('-v', action='store_true',
                         help='Verbose mode. Display loss graphs, precision'
                         ' graphs, confusion matrices etc')
+    parser.add_argument('-sp', action='store_true',
+                        help='Save Plot mode. Saves plots to disk')
     parser.add_argument('-t', action='append', nargs='+', type=str,
                         choices=model_choices,
                         help='Training mode. Train the next N models that'
@@ -161,7 +163,11 @@ def main():
     print(f'{model_list = }')
 
     confusion_matrix = su.ensembleConfusion(model_list, val_dg)
-    su.plotEnsembleConfusion(confusion_matrix, classes)
+    
+    save_plot_image = False
+    if args.sp:
+        save_plot_image = True
+    su.plotEnsembleConfusion(confusion_matrix, classes, save_plot_image)
 
 
 if __name__ == "__main__":
