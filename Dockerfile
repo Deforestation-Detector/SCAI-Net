@@ -1,3 +1,4 @@
+# install necessary tensorflow CUDA environment
 FROM tensorflow/tensorflow:latest-gpu
 
 RUN apt-get update && apt-get install -y git
@@ -9,6 +10,3 @@ RUN pip install -r /init/requirements.txt
 
 # mount ./data
 VOLUME ./data
-
-# copy ssh key into container
-COPY ~/.ssh/id_* ~/.ssh/
