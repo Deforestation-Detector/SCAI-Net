@@ -9,3 +9,6 @@ RUN pip install -r /init/requirements.txt
 
 # mount ./data
 VOLUME ./data
+
+# copy ssh key into container
+COPY ~/.ssh/id_* ~/.ssh/
