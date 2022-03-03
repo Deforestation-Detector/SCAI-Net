@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as Kb
-from tensorflow.keras.applications import ResNet50V2, Xception, VGG16, VGG19, MobileNetV2, EfficientNetV2L, EfficientNetV2M, EfficientNetB7
+from tensorflow.keras.applications import ResNet50V2, Xception, VGG16, VGG19, MobileNetV2, InceptionResNetV2
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Input, Dense, BatchNormalization, Activation, Conv2D, MaxPooling2D, Flatten
 from tensorflow.keras.models import Sequential, load_model
 from matplotlib import pyplot as plt
@@ -13,10 +13,11 @@ from typing import TypeVar
 
 IMG_DIMS = 256
 DATA_PATH = 'data/train-jpg/'
-TRAIN_BATCH_SIZE = 32
-VAL_BATCH_SIZE = 64
+TRAIN_BATCH_SIZE = 32 #32
+VAL_BATCH_SIZE = 64 #64
 THRESHOLD = 0.5
 N_LABELS = None
+
 
 TRANSFER_ARCHITECTURES = {
     'Xception': Xception(
@@ -30,13 +31,13 @@ TRANSFER_ARCHITECTURES = {
                                     256, 256, 3)), 'MobileNetV2': MobileNetV2(
                                         weights='imagenet', include_top=False, input_shape=(
                                             256, 256, 3)),
-                                            'EfficientNetV2L': EfficientNetV2L(
-                                        weights='imagenet', include_top=False, input_shape=(
-                                            256, 256, 3)),
-                                            'EfficientNetV2M': EfficientNetV2M(
-                                        weights='imagenet', include_top=False, input_shape=(
-                                            256, 256, 3)),
-                                            'EfficientNetB7': EfficientNetB7(
+                                        #     'EfficientNetV2L': EfficientNetV2L(
+                                        # weights='imagenet', include_top=False, input_shape=(
+                                        #     256, 256, 3)),
+                                        #     'EfficientNetV2M': EfficientNetV2M(
+                                        # weights='imagenet', include_top=False, input_shape=(
+                                        #     256, 256, 3)),
+                                            'InceptionResNetV2': InceptionResNetV2(
                                         weights='imagenet', include_top=False, input_shape=(
                                             256, 256, 3)), }
 
@@ -135,8 +136,8 @@ def compile_model(model: tf.keras.Model) -> None:
     opt = tf.keras.optimizers.Adam(learning_rate=1e-4)
 
     model.compile(
-        # loss=tf.keras.losses.BinaryCrossentropy(),
-        loss=f1_loss,
+        loss=tf.keras.losses.BinaryCrossentropy(),
+        # loss=f1_loss,
         optimizer=opt,
         metrics=[tf.keras.metrics.Precision()]
     )
@@ -324,7 +325,8 @@ def plotConfusionMatrices(
 
 def plotEnsembleConfusion(
         confusion_matrix: np.ndarray,
-        classes: 'list[str]') -> None:
+        classes: 'list[str]',
+        save_plot_image: bool=False) -> None:
     sqt = math.sqrt(N_LABELS)
     rows, columns = math.ceil(sqt), math.floor(sqt)
 
@@ -337,4 +339,8 @@ def plotEnsembleConfusion(
             annot=True,
             fmt='d',
         )
+    if save_plot_image:
+        img_path = f'{np.random.rand()}.png'
+        plt.savefig(img_path)
+        print(f"plot saved as: '{img_path}'")
     plt.show()
