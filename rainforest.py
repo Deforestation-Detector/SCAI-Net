@@ -64,7 +64,7 @@ def main():
 
     if argc > 1:
         for arg in arg_dict:
-            if arg in ['v']:
+            if arg in ['v', 'sp']:
                 continue
 
             if arg_dict[arg] is not None:
