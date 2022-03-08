@@ -37,7 +37,7 @@ TRANSFER_ARCHITECTURES = {
 def set_NLABELS(train_dataframe: pd.DataFrame) -> None:
     df_columns = train_dataframe.columns
 
-    if 'images' not in df_columns or 'tags' not in df_columns:
+    if 'image_name' not in df_columns or 'tags' not in df_columns:
         return None
 
     if len(df_columns) != 2:
@@ -100,7 +100,10 @@ def create_data(
     return train_dg, val_dg
 
 
-def f1(y_true: tf.constant, y_pred: tf.constant) -> tf.constant:
+def f1(y_true: tf.float32, y_pred: tf.float32) -> tf.float32:
+    if tf.is_tensor(y_true) == False or tf.is_tensor(y_pred) == False:
+        return None
+
     y_pred = Kb.round(y_pred)
     tp = Kb.sum(Kb.cast(y_true * y_pred, 'float'), axis=0)
     tn = Kb.sum(Kb.cast((1 - y_true) * (1 - y_pred), 'float'), axis=0)
@@ -116,6 +119,8 @@ def f1(y_true: tf.constant, y_pred: tf.constant) -> tf.constant:
 
 
 def f1_loss(y_true: tf.constant, y_pred: tf.constant) -> tf.constant:
+    if tf.is_tensor(y_true) == False or tf.is_tensor(y_pred) == False:
+        return None
 
     y_true = tf.cast(y_true, tf.float32)
 
@@ -136,19 +141,18 @@ def compile_model(model: tf.keras.Model) -> None:
     opt = tf.keras.optimizers.Adam(learning_rate=1e-4)
 
     model.compile(
-        # loss=tf.keras.losses.BinaryCrossentropy(),
-        loss=f1_loss,
+        loss=tf.keras.losses.BinaryCrossentropy(),
         optimizer=opt,
         metrics=[tf.keras.metrics.Precision()]
     )
 
 
 def create_transfer_model(ARCH: str) -> tf.keras.Model:
+    if isinstance(ARCH, str) == False or ARCH not in TRANSFER_ARCHITECTURES:
+        return None
+
     base_model = TRANSFER_ARCHITECTURES[ARCH]
     initializer = tf.keras.initializers.HeNormal()
-
-    # for layer in base_model.layers:
-    #   layer.trainable = False
 
     transfer_model = Sequential()
     transfer_model.add(base_model)
@@ -163,12 +167,15 @@ def create_transfer_model(ARCH: str) -> tf.keras.Model:
     transfer_model.add(BatchNormalization())
     transfer_model.add(Activation('relu'))
 
-    transfer_model.add(Dense(N_LABELS, activation=Activation('sigmoid')))
+    transfer_model.add(Dense(N_LABELS, activation=Activation(activation = 'sigmoid')))
 
     return transfer_model
 
 
 def plot_history(history_df: pd.DataFrame, y: tf.constant) -> None:
+    if isinstance(history_df, pd.DataFrame) == False or tf.is_tensor(y) == False:
+        return
+
     plt.figure(figsize=(10, 8))
 
     plt.title(f"{y[0]} over time")
@@ -182,6 +189,9 @@ def plot_history(history_df: pd.DataFrame, y: tf.constant) -> None:
 
 
 def reverseHot(label_numpy: np.ndarray, classes: 'list[str]') -> 'list[str]':
+    if isinstance(label_numpy, np.ndarray) == False or isinstance(classes, list) == False:
+        return None
+
     label = []
 
     for i in label_numpy:
