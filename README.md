@@ -8,7 +8,16 @@
   5. Install nvidia container for vscode
   6. Install visual studio code
 * Windows
-  1. tbd
+  * Install python
+  * Installl the following with pip:
+    * TensorFlow
+    * Pandas
+    * Numpy
+    * SciKit Learn
+    * Matplot lib
+    * Seaborn
+    * Argparse
+  * run `python rainforest.py [flags]` to execute the program
 
 # Download Dataset
 * Signup for an account on Kaggle and download the dataset from the competition: https://www.kaggle.com/c/planet-understanding-the-amazon-from-space/data
