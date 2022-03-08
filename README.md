@@ -1,5 +1,8 @@
 [![autopep8](https://github.com/Deforestation-Detector/SCAI-Net/actions/workflows/autopep8.yml/badge.svg)](https://github.com/Deforestation-Detector/SCAI-Net/actions/workflows/autopep8.yml)
 
+# About this Repository
+This is a repo for a transfer learning, ensemble network of CNNs. This network is specifically for classifying images of the Amazon rainforest.
+
 # Environment Installation guide
 * Ubuntu guide referencing: [this guide](https://madmenhitbooker.medium.com/machine-learning-container-with-gpu-inside-visual-studio-code-ubuntu-3233a2921462)
   1. Install nvidia driver
