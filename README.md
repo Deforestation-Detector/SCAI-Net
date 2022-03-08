@@ -5,7 +5,6 @@
   1. Install nvidia driver
       1. Can be found under "Additional Drivers" inside Software Updater
   3. Install docker
-  4. Install vscode
   5. Install nvidia container for vscode
   6. Install visual studio code
 * Windows
