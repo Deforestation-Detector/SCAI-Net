@@ -9,15 +9,13 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 from sklearn.metrics import multilabel_confusion_matrix
 import math
-from typing import TypeVar
 
 IMG_DIMS = 256
 DATA_PATH = 'data/train-jpg/'
-TRAIN_BATCH_SIZE = 32 #32
-VAL_BATCH_SIZE = 64 #64
+TRAIN_BATCH_SIZE = 32
+VAL_BATCH_SIZE = 64
 THRESHOLD = 0.5
 N_LABELS = None
-
 
 TRANSFER_ARCHITECTURES = {
     'Xception': Xception(
@@ -31,22 +29,28 @@ TRANSFER_ARCHITECTURES = {
                                     256, 256, 3)), 'MobileNetV2': MobileNetV2(
                                         weights='imagenet', include_top=False, input_shape=(
                                             256, 256, 3)),
-                                        #     'EfficientNetV2L': EfficientNetV2L(
-                                        # weights='imagenet', include_top=False, input_shape=(
-                                        #     256, 256, 3)),
-                                        #     'EfficientNetV2M': EfficientNetV2M(
-                                        # weights='imagenet', include_top=False, input_shape=(
-                                        #     256, 256, 3)),
                                             'InceptionResNetV2': InceptionResNetV2(
                                         weights='imagenet', include_top=False, input_shape=(
                                             256, 256, 3)), }
 
 
 def set_NLABELS(train_dataframe: pd.DataFrame) -> None:
+    df_columns = train_dataframe.columns
+
+    if 'images' not in df_columns or 'tags' not in df_columns:
+        return None
+
+    if len(df_columns) != 2:
+        return None
+
     global N_LABELS
     curr_count = 0
     unique_labels = {}
     for line in train_dataframe['tags'].values:
+        if isinstance(line, str) == False:
+            N_LABELS = None
+            return
+
         for label in line.split():
             if label not in unique_labels:
                 unique_labels[label] = curr_count
@@ -54,17 +58,15 @@ def set_NLABELS(train_dataframe: pd.DataFrame) -> None:
 
     N_LABELS = len(unique_labels)
 
-
 def create_data(
         train_df: pd.DataFrame,
         classes: np.ndarray) -> "tuple[tf.keras.preprocessing.image.ImageDataGenerator]":
+
+    if isinstance(train_df, pd.DataFrame) == False or isinstance(classes, np.ndarray) == False:
+        return None, None
+
     datagen = tf.keras.preprocessing.image.ImageDataGenerator(
         rotation_range=45,
-        # width_shift_range = 0.15,
-        # height_shift_range = 0.15,
-        # channel_shift_range = 0.5
-        # brightness_range = (0.2, 0.7),
-        # shear_range = 0.2,
         horizontal_flip=True,
         vertical_flip=True,
         validation_split=0.2,
@@ -94,8 +96,6 @@ def create_data(
         batch_size=VAL_BATCH_SIZE,
         shuffle=True,
     )
-
-    print(f'{train_dg = }')
 
     return train_dg, val_dg
 
@@ -136,8 +136,8 @@ def compile_model(model: tf.keras.Model) -> None:
     opt = tf.keras.optimizers.Adam(learning_rate=1e-4)
 
     model.compile(
-        loss=tf.keras.losses.BinaryCrossentropy(),
-        # loss=f1_loss,
+        # loss=tf.keras.losses.BinaryCrossentropy(),
+        loss=f1_loss,
         optimizer=opt,
         metrics=[tf.keras.metrics.Precision()]
     )
@@ -325,8 +325,7 @@ def plotConfusionMatrices(
 
 def plotEnsembleConfusion(
         confusion_matrix: np.ndarray,
-        classes: 'list[str]',
-        save_plot_image: bool=False) -> None:
+        classes: 'list[str]') -> None:
     sqt = math.sqrt(N_LABELS)
     rows, columns = math.ceil(sqt), math.floor(sqt)
 
@@ -339,8 +338,4 @@ def plotEnsembleConfusion(
             annot=True,
             fmt='d',
         )
-    if save_plot_image:
-        img_path = f'{np.random.rand()}.png'
-        plt.savefig(img_path)
-        print(f"plot saved as: '{img_path}'")
     plt.show()
