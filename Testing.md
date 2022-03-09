@@ -54,27 +54,48 @@ about each function can be found below:
             * Should and do obtain joining of elements in classes list with corresponding labels array element.
 
 # Sam's module and functional testing
-I tested the rainforest module, which serves as the main driver of our program. For nearly all of the major features in this program. 
+I also tested the scai_test module. Like Donovan, I carried out my unit tests using the python unittest standard library module. 
 
-create_data():
-create_data is meant to take in a dataframe object with the file names and the corresponding labels.
-We followed the exact same invalid input logic as the function directly above, set_NLABELS. For testing valid
-input, we created a dataframe off of the small csv file described above, and passed that as an argument
-into the create_data function. After this, the two returned values should be something other than "None".
-If so, we know that two data generators were successfully created. The only way that the data generators
-could fail to be created is if they threw an exception, or if they returned ("None", "None").
+* create_data():
+    * Description and expectations:
+        * create_data is meant to take in a dataframe object with the file names and the corresponding labels.
+        We followed the exact same invalid input logic as the function directly above, set_NLABELS. For testing valid
+        input, we created a dataframe off of the small csv file described above, and passed that as an argument
+        into the create_data function. After this, the two returned values should be something other than "None".
+        If so, we know that two data generators were successfully created. The only way that the data generators
+        could fail to be created is if they threw an exception, or if they returned ("None", "None").
+    * Equivalence classes:
+        * Train datagenerator is None
+        * Validation datagenerator is None
+        * Train dataframe is None
+            * Train and Validation datagenerators should equal None
+        * Label classes are None
+            * Train and Validation datagenerators should equal None
 
-f1loss():
-This function's testing is literally the exact same as f1 just with different hand-tested, expected outcomes.
-This function is just a differentiable version of the f1 function such that it can be used as a loss function
-so the model can perform a gradient.
+* f1loss():
+    * Description and expectations:
+        * This function's testing is literally the exact same as f1 just with different hand-tested, expected outcomes.
+        This function is just a differentiable version of the f1 function such that it can be used as a loss function
+        so the model can perform a gradient.
+    * Equivalence classes:
+        * Non-tensor values
+            * Should return None and does return None
+        * Prediction close to ground truth
+            * We chose values of [0.8, 0.2, 0.8] and [0.4, 0.1, 0.7] to be satisfiably close for all intents and purposes. We then hand-calculated and expected result, obtained (after rounding) 0.4, which we then obtain.
+        * Prediction far from truth
+            * We chose values of [0.9, 0.8, 0.4] and [0.1, 0.1, 0.6] to again be satisfiable. We again then hand-calculated this and obtained the expected result of 0.717
 
-create_transfer_model():
-This function is supposed to take in an architecture name specified by a string, initialize it,
-and set it as a base model followed by a flattening layer with a dense neural network. With hundreds of millions
-of neurons within each base model, testing for model equality here isn't really feasible here, so the way I saw it,
-there were two cases between invalid input and valid input. If the input was invalid because the element in the ARCH
-variable wasn't a string, or if the specified ARCH isn't in the set of architectures, then "None" is returned. Else
-a valid model is returned. This is further backed up by the fact that we custom defined the architecture set as a constant
-and thus if the user supplied a valid architecture, then without fail, it couldn't do anything other than return a valid
-architecture.
+* create_transfer_model():
+    * Description and expectations:
+        * This function is supposed to take in an architecture name specified by a string, initialize it,
+        and set it as a base model followed by a flattening layer with a dense neural network. With hundreds of millions
+        of neurons within each base model, testing for model equality here isn't really feasible here, so the way I saw it,
+        there were two cases between invalid input and valid input. If the input was invalid because the element in the ARCH
+        variable wasn't a string, or if the specified ARCH isn't in the set of architectures, then "None" is returned. Else
+        a valid model is returned. This is further backed up by the fact that we custom defined the architecture set as a constant
+        and thus if the user supplied a valid architecture, then without fail, it couldn't do anything other than return a valid
+        architecture.
+    * Equivalence classes:
+        * Model architecture is valid, one of the tested models.
+        * Model architecture is spelled wrong
+        * Model architecture is "None"
