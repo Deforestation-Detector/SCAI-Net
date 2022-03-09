@@ -30,7 +30,7 @@ about each function can be found below:
         * Shoulda and does result in 5
 
 * f1()
-    * Description and expecations
+    * Description and expectations
         * This is one of the functions with the caveats as mentioned above. This function as passed as an argument into the tensorflow evaluation metric. This function is bound by a relu/sigmoid activation function, which, in turn, means that it cannot be outside of the range of 0 or 1. In turn, the only meaningful tests I could think of were to ensure that the elements provided were 32-bit tensors. If so, then as mentioned, they must be bound between 0 and 1. Furthermore, we hand-tested the function. We provided some arbitrary values between 0 and 1 (for reasons described several times), and verified that their ouputs were as expected.
     * Equivalence classes
         * Non-tensor values
@@ -41,7 +41,7 @@ about each function can be found below:
             * We chose values of [0.9, 0.8, 0.4] and [0.1, 0.1, 0.6] to again be satisfiable. We again then hand-calculated this and obtained the expected result of 0.258
 
 * reverseHot()
-    * Description and expecations
+    * Description and expectations
         * This function is supposed to take an array of integers, each of which corresponds to a label in the specified classes array. In turn, this means two things need to be expected as arguments. First, the label_numpy array must obviously be a numpy array, but it also must be a numpy array of integers. Furthermore, if the classes list is not a list of strings, then that would also be invalid input. If either of these occur, we would return "None". However, if not, then we expect that the label string returned would be the concatenation of the elements in the classes array for each element that has a corresponding index.
     * Equivalence classes
         * Non-list classes
