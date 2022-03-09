@@ -74,3 +74,6 @@ must obviously be a numpy array, but it also must be a numpy array of integers. 
 is not a list of strings, then that would also be invalid input. If either of these occur, we would return "None".
 However, if not, then we expect that the label string returned would be the concatenation of the elements in the classes
 array for each element that has a corresponding index.
+
+# Sam's module and functional testing
+I tested the rainforest module, which serves as the main driver of our program. For nearly all of the major features in this program. 
