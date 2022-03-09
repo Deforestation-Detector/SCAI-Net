@@ -177,6 +177,11 @@ def compile_model(model: tf.keras.Model) -> None:
 
 
 def create_transfer_model(ARCH: str) -> tf.keras.Model:
+    '''Returns a transfer learning model from the given ARCH.
+
+    Keyword arguments:
+    ARCH -- name of the desired model
+    '''
     if isinstance(ARCH, str) == False or ARCH not in TRANSFER_ARCHITECTURES:
         return None
 
@@ -202,6 +207,12 @@ def create_transfer_model(ARCH: str) -> tf.keras.Model:
 
 
 def plot_history(history_df: pd.DataFrame, y: tf.constant) -> None:
+    '''Plot the model training history.
+
+    Keyword arguments:
+    history_df -- the training history Dataframe
+    y -- the metric to measure
+    '''
     if isinstance(history_df, pd.DataFrame) == False or tf.is_tensor(y) == False:
         return
 
@@ -218,6 +229,12 @@ def plot_history(history_df: pd.DataFrame, y: tf.constant) -> None:
 
 
 def reverseHot(label_numpy: np.ndarray, classes: 'list[str]') -> 'list[str]':
+    '''Returns a space delimited string of labels. 
+
+    Keyword arguments:
+    label_numpy -- the raw model prediction labels 
+    classes -- the human readable classes  
+    '''
     if isinstance(label_numpy, np.ndarray) == False or isinstance(classes, list) == False:
         return None
 
@@ -236,6 +253,15 @@ def displayGridItem(
         y: tf.data.Dataset,
         prediction: str,
         classes: 'list[str]') -> None:
+    '''Plots a single image.
+
+    Keyword arguments:
+    idx -- index of the image in X
+    X -- input/features dataset
+    y -- output/predictions dataset
+    prediction -- the prediction made by the model
+    classes -- the different classes the model can predict
+    '''
     img = tf.cast(X[idx] * 255, tf.uint8)
     # print(f"{img = }")
     indices = tf.where(y[idx] == 1).numpy()
@@ -252,6 +278,13 @@ def eyeTestPredictions(
         model: 'tf.keras.Model',
         datagen: 'tf.keras.preprocessing.image.ImageDataGenerator',
         classes: 'list[str]') -> None:
+    '''Plots images for human evaluation.
+
+    Keyword arguments:
+    model -- model
+    datagen -- images the model interprets
+    classes -- possible categories the model can predict
+    '''
     fig = plt.figure(figsize=(20, 15))
     fig.subplots_adjust(hspace=0.8)
     rows, columns = 5, 4
@@ -276,6 +309,12 @@ def eyeTestPredictions(
 def confusionMatrices(
         models: 'list[tf.keras.Model]',
         dataset: tf.data.Dataset) -> dict:
+    '''Plots a confusion matrix for each model for the given dataset.
+
+    Keyword arguments:
+    models -- the models to evaluate
+    dataset -- the dataset to test the models against
+    '''
     confusion_matrices = {}
 
     cardinality = len(dataset) * VAL_BATCH_SIZE
@@ -311,6 +350,12 @@ def confusionMatrices(
 def ensembleConfusion(
         models: 'list[tf.keras.Model]',
         dataset: tf.data.Dataset) -> np.ndarray:
+    '''Calculates confusion matrices of each model for the given dataset.
+
+    Keyword arguments:
+    models -- the models to evaluate
+    dataset -- the dataset to test the models against
+    '''
     cardinality = len(dataset) * VAL_BATCH_SIZE
     confusion_matrix = np.zeros((N_LABELS, 2, 2)).astype(int)
 
@@ -347,6 +392,12 @@ def ensembleConfusion(
 def plotConfusionMatrices(
         confusion_matrices: dict,
         classes: 'list[str]') -> None:
+    '''Plots a grid of confusion matrices for each model given.
+
+    Keyword arguments:
+    confusion_matrices -- the evaluated models
+    classes -- the possible categories the model can predict
+    '''
     sqt = math.sqrt(N_LABELS)
     rows, columns = math.ceil(sqt), math.floor(sqt)
 
@@ -367,6 +418,12 @@ def plotConfusionMatrices(
 def plotEnsembleConfusion(
         confusion_matrix: np.ndarray,
         classes: 'list[str]') -> None:
+    '''Plots a grid of confusion matrices for each model given.
+
+    Keyword arguments:
+    confusion_matrices -- the evaluated models
+    classes -- the possible categories the model can predict
+    '''
     sqt = math.sqrt(N_LABELS)
     rows, columns = math.ceil(sqt), math.floor(sqt)
 
