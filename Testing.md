@@ -1,6 +1,6 @@
-# Donovan's module and functional testing
-I tested the scai_test module. For some functions, unit tests became a little pointless
-and meaningless, so I voided those. For instance, any plotting functions just did not
+# Comments and Caveats
+We tested the scai_test module. For some functions, unit tests became a little pointless
+and meaningless, so We voided those. For instance, any plotting functions just did not
 make sense to test. Another caveat worth mentioning: there were other functions that were
 just not feasible to test. There were plenty of functions that required a model to test and
 thus would take at least 10-20 minutes to test if utilizing the graphics card, and thus
@@ -11,6 +11,8 @@ without throwing exceptions. However, in the vast majority of functions, you'll 
 the very least, we ensured that the elements passed in were valid in that they're of the right type,
 with the right number of elements. This was largely tested in the scai_test module. More details
 about each function can be found below:
+
+## Donovan's module and functional testing
 
 * set_NLABELS():
     * Description and expectations
@@ -53,8 +55,7 @@ about each function can be found below:
         * Array labels and list classes with in bounds indices
             * Should and do obtain joining of elements in classes list with corresponding labels array element.
 
-# Sam's module and functional testing
-I also tested the scai_test module. Like Donovan, I carried out my unit tests using the python unittest standard library module. 
+## Sam's module and functional testing
 
 * create_data():
     * Description and expectations:
