@@ -66,13 +66,6 @@ def create_data(
     if isinstance(train_df, pd.DataFrame) == False or isinstance(classes, np.ndarray) == False:
         return None, None
 
-    df_columns = train_df.columns
-    if 'image_name' not in df_columns or 'tags' not in df_columns:
-        return None
-
-    if len(df_columns) != 2:
-        return None
-
     datagen = tf.keras.preprocessing.image.ImageDataGenerator(
         rotation_range=45,
         horizontal_flip=True,
@@ -203,6 +196,8 @@ def reverseHot(label_numpy: np.ndarray, classes: 'list[str]') -> 'list[str]':
     label = []
 
     for i in label_numpy:
+        if i > len(classes) or isinstance(classes[i], str) == False:
+            return None
         label.append(classes[i])
     return ' '.join(label)
 

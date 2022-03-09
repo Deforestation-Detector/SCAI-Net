@@ -162,6 +162,18 @@ class SCAITestMethods(unittest.TestCase):
         reverse_hot_expected = None
         self.assertEqual(reverse_hot_invalid, reverse_hot_expected)
 
+        label_valid = np.array([0, 5])
+        classes_invalid = ['label1', 'label2', 'label3']
+        reverse_hot_invalid = su.reverseHot(label_valid, classes_invalid)
+        reverse_hot_expected = None
+        self.assertEqual(reverse_hot_invalid, reverse_hot_expected)
+        
+        label_valid = np.array([0, 1])
+        classes_invalid = ['label1', 1, 'label3']
+        reverse_hot_invalid = su.reverseHot(label_valid, classes_invalid)
+        reverse_hot_expected = None
+        self.assertEqual(reverse_hot_invalid, reverse_hot_expected)
+
 
 if __name__ == '__main__':
     unittest.main()

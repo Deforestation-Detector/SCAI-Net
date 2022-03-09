@@ -13,9 +13,9 @@ with the right number of elements. This was largely tested in the scai_test modu
 about each function can be found below:
 
 * set_NLABELS():
-    * Description and expectations:
+    * Description and expectations
         * set_NLABELS is supposed to take in a dataframe. If not, the data is invalid, and the test should fail, resulting in the NLABELS global variable remaining with the value "None". Furthermore, the dataframe is meant to contain exactly two columns. First, an image_name column describing the name of the file within the directory. Second, the corresponding labels for that image. If valid input is provided to the function, then after the call to it, the NLABELS global variable will no longer be "None". This is the fact that we leveraged to test input validity. In terms of testing valid input, we supplied a substantially smaller csv file within a substantially smaller data file, where we called the set_NLABELS after setting up a dataframe object from that csv file. After this, we checked the NLABELS value to ensure that the number of labels corresponded to the number of unique labels within the csv.
-    * Equivalence classes:
+    * Equivalence classes
         * Not a dataframe
         * Should and does result in "None"
             * Dataframe with less or more than 2 columns, or with a missing image_names/tags column
@@ -27,21 +27,31 @@ about each function can be found below:
             * Valid dataframe with 5 unique labels and 6 image_names
         * Shoulda and does result in 5
 
-f1():
-This is one of the functions with the caveats as mentioned above. This function as passed as an argument into
-the tensorflow evaluation metric. This function is bound by a relu/sigmoid activation function, which, in turn,
-means that it cannot be outside of the range of 0 or 1. In turn, the only meaningful tests I could think of were
-to ensure that the elements provided were 32-bit tensors. If so, then as mentioned, they must be bound between 0
-and 1. Furthermore, we hand-tested the function. We provided some arbitrary values between 0 and 1 (for reasons
-described several times), and verified that their ouputs were as expected.
+* f1()
+    * Description and expecations
+        * This is one of the functions with the caveats as mentioned above. This function as passed as an argument into the tensorflow evaluation metric. This function is bound by a relu/sigmoid activation function, which, in turn, means that it cannot be outside of the range of 0 or 1. In turn, the only meaningful tests I could think of were to ensure that the elements provided were 32-bit tensors. If so, then as mentioned, they must be bound between 0 and 1. Furthermore, we hand-tested the function. We provided some arbitrary values between 0 and 1 (for reasons described several times), and verified that their ouputs were as expected.
+    * Equivalence classes
+        * Non-tensor values
+            * Should return None and does return None
+        * Prediction close to ground truth
+            * We chose values of [0.8, 0.2, 0.8] and [0.4, 0.1, 0.7] to be satisfiably close for all intents and purposes. We then hand-calculated and expected result, obtained (after rounding) 0.571, which we then obtain.
+        * Prediction far from truth
+            * We chose values of [0.9, 0.8, 0.4] and [0.1, 0.1, 0.6] to again be satisfiable. We again then hand-calculated this and obtained the expected result of 0.258
 
-reverseHot():
-This function is supposed to take an array of integers, each of which corresponds to an label in the specified
-classes array. In turn, this means two things need to be expected as arguments. First, the label_numpy array
-must obviously be a numpy array, but it also must be a numpy array of integers. Furthermore, if the classes array
-is not a list of strings, then that would also be invalid input. If either of these occur, we would return "None".
-However, if not, then we expect that the label string returned would be the concatenation of the elements in the classes
-array for each element that has a corresponding index.
+* reverseHot()
+    * Description and expecations
+        * This function is supposed to take an array of integers, each of which corresponds to a label in the specified classes array. In turn, this means two things need to be expected as arguments. First, the label_numpy array must obviously be a numpy array, but it also must be a numpy array of integers. Furthermore, if the classes list is not a list of strings, then that would also be invalid input. If either of these occur, we would return "None". However, if not, then we expect that the label string returned would be the concatenation of the elements in the classes array for each element that has a corresponding index.
+    * Equivalence classes
+        * Non-list classes
+            * Should and do obtain a returned value of "None"
+        * List classes with non-string
+            * Should and do obtain a returned value of "None"
+        * Non-array labels
+            * Should and do obtain a returned value of "None"
+        * Array labels and list classes with out of bounds index
+            * Should and do obtain a returned value of "None"
+        * Array labels and list classes with in bounds indices
+            * Should and do obtain joining of elements in classes list with corresponding labels array element.
 
 # Sam's module and functional testing
 I tested the rainforest module, which serves as the main driver of our program. For nearly all of the major features in this program. 
