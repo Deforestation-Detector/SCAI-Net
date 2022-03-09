@@ -113,6 +113,12 @@ def create_data(
 
 
 def f1(y_true: tf.float32, y_pred: tf.float32) -> tf.float32:
+    '''Returns f1 loss.
+
+    Keyword arguments:
+    y_true -- ground truth predictions
+    y_pred -- predictions from model
+    '''
     if tf.is_tensor(y_true) == False or tf.is_tensor(y_pred) == False:
         return None
 
@@ -131,6 +137,12 @@ def f1(y_true: tf.float32, y_pred: tf.float32) -> tf.float32:
 
 
 def f1_loss(y_true: tf.constant, y_pred: tf.constant) -> tf.constant:
+    '''Returns differentiable f1 loss.
+
+    Keyword arguments:
+    y_true -- ground truth predictions
+    y_pred -- predictions from model
+    '''
     if tf.is_tensor(y_true) == False or tf.is_tensor(y_pred) == False:
         return None
 
@@ -150,6 +162,11 @@ def f1_loss(y_true: tf.constant, y_pred: tf.constant) -> tf.constant:
 
 
 def compile_model(model: tf.keras.Model) -> None:
+    '''Initializes a tensorflow model.
+
+    Keyword arguments:
+    model -- a tensorflow model to be compiled
+    '''
     opt = tf.keras.optimizers.Adam(learning_rate=1e-4)
 
     model.compile(
