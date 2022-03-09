@@ -35,6 +35,8 @@ TRANSFER_ARCHITECTURES = {
 
 
 def set_NLABELS(train_dataframe: pd.DataFrame) -> None:
+    if isinstance(train_dataframe, pd.DataFrame) == False:
+        return None, None
     df_columns = train_dataframe.columns
 
     if 'image_name' not in df_columns or 'tags' not in df_columns:
@@ -61,9 +63,15 @@ def set_NLABELS(train_dataframe: pd.DataFrame) -> None:
 def create_data(
         train_df: pd.DataFrame,
         classes: np.ndarray) -> "tuple[tf.keras.preprocessing.image.ImageDataGenerator]":
-
     if isinstance(train_df, pd.DataFrame) == False or isinstance(classes, np.ndarray) == False:
         return None, None
+
+    df_columns = train_df.columns
+    if 'image_name' not in df_columns or 'tags' not in df_columns:
+        return None
+
+    if len(df_columns) != 2:
+        return None
 
     datagen = tf.keras.preprocessing.image.ImageDataGenerator(
         rotation_range=45,
