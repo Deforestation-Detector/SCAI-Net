@@ -38,7 +38,7 @@ def set_NLABELS(train_dataframe: pd.DataFrame) -> None:
     '''Stores the number of labels in N_LABELS.
 
     Keyword arguments:
-    train_dataframe -- the Dataframe containing training data
+    train_dataframe -- the Dataframe containing images and corresponding labels 
     '''
     if isinstance(train_dataframe, pd.DataFrame) == False:
         return None, None
@@ -68,7 +68,11 @@ def set_NLABELS(train_dataframe: pd.DataFrame) -> None:
 def create_data(
         train_df: pd.DataFrame,
         classes: np.ndarray) -> "tuple[tf.keras.preprocessing.image.ImageDataGenerator]":
-    '''
+    '''Returns ImageDataGenerators for training and validation.
+
+    Keyword arguemnts:
+    train_df -- the Dataframe containing training data
+    classes -- MultiLabelBinarizer array corresponding to the different classes
     '''
     if isinstance(train_df, pd.DataFrame) == False or isinstance(classes, np.ndarray) == False:
         return None, None
