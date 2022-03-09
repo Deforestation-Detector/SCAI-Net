@@ -12,8 +12,9 @@ the very least, we ensured that the elements passed in were valid in that they'r
 with the right number of elements. This was largely tested in the scai_test module. More details
 about each function can be found below:
 
-set_NLABELS():
-set_NLABELS is supposed to take in a dataframe. If not, the data is invalid, and the test should fail,
+## set_NLABELS():
+### Description and expectations:
+#### set_NLABELS is supposed to take in a dataframe. If not, the data is invalid, and the test should fail,
 resulting in the NLABELS global variable remaining with the value "None". Furthermore, the dataframe
 is meant to contain exactly two columns. First, an image_name
 column describing the name of the file within the directory. Second, the corresponding labels for that
@@ -23,6 +24,17 @@ In terms of testing valid input, we supplied a substantially smaller csv file wi
 smaller data file, where we called the set_NLABELS after setting up a dataframe object from that
 csv file. After this, we checked the NLABELS value to ensure that the number of labels corresponded
 to the number of unique labels within the csv.
+### Equivalence classes:
+#### Not a dataframe
+##### Should and does result in "None"
+#### Dataframe with less or more than 2 columns, or with a missing image_names/tags column
+##### Should and does result in "None"
+#### Dataframe with missing image_names column
+##### Should and does result in "None"
+#### Dataframe with missing tags column
+##### Should and does result in "None"
+#### Valid dataframe with 5 unique labels and 6 image_names
+##### Shoulda and does result in 5
 
 create_data():
 create_data is meant to take in a dataframe object with the file names and the corresponding labels.
