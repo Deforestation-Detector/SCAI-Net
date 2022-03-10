@@ -19,7 +19,7 @@ datagen = tf.keras.preprocessing.image.ImageDataGenerator(
     rescale = 1 / 255,
 )
 
-train_dataframe = pd.read_csv('data/shitter.csv').astype(str)
+train_dataframe = pd.read_csv('data/MINE/MINE.csv').astype(str)
 train_dataframe['image_name'] += '.jpg'
 su.set_NLABELS(train_dataframe)
 
