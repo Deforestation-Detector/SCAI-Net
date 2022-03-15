@@ -81,6 +81,7 @@ def main():
     train_dataframe['image_name'] += '.jpg'
     su.set_NLABELS(train_dataframe)
 
+    # Need to encode dataframe as multihot as oppposed to strings
     mlb = MultiLabelBinarizer()
     binarized_df = mlb.fit(train_dataframe["tags"].str.split(" "))
     classes = mlb.classes_
@@ -107,6 +108,7 @@ def main():
             print(f'Current architecture: {model_name}')
         is_training, is_loaded, is_evaluated, is_training = False, False, False, False
 
+        # Need to determine which operations the user flagged true for this model
         for operation in model_dict[model_name]:
             if operation == 't':
                 is_training = True
