@@ -44,6 +44,7 @@ def set_NLABELS(train_dataframe: pd.DataFrame) -> None:
         return None, None
     df_columns = train_dataframe.columns
 
+    # Dataset should only have 2 colums: tags and images
     if 'image_name' not in df_columns or 'tags' not in df_columns:
         return None
 
@@ -58,6 +59,7 @@ def set_NLABELS(train_dataframe: pd.DataFrame) -> None:
             N_LABELS = None
             return
 
+        # Need to separate the labels by whitespaces and look for unique labels in it
         for label in line.split():
             if label not in unique_labels:
                 unique_labels[label] = curr_count
@@ -262,6 +264,7 @@ def displayGridItem(
     prediction -- the prediction made by the model
     classes -- the different classes the model can predict
     '''
+    # Need to transform the images to (0, 256) then render them
     img = tf.cast(X[idx] * 255, tf.uint8)
     # print(f"{img = }")
     indices = tf.where(y[idx] == 1).numpy()
@@ -289,6 +292,7 @@ def eyeTestPredictions(
     fig.subplots_adjust(hspace=0.8)
     rows, columns = 5, 4
 
+    # Need to grab first batch in datagenerator for testing
     for x_batch, y_batch in datagen:
         break
 
@@ -329,6 +333,7 @@ def confusionMatrices(
         print(f'Obtaining confusion matrix for {model_name}')
         for features, labels in dataset:
             prob_densities = model.predict(features)
+            # Need to convert the model predictions to 0, 1
             y_hat = tf.convert_to_tensor(
                 np.where(prob_densities < 0.5, 0., 1.))
             confuse_matrix = multilabel_confusion_matrix(
@@ -371,6 +376,7 @@ def ensembleConfusion(
         for model in models:
             prob_densities += model.predict(features)
 
+        # Need to average predictions of all models then convert them to 0, 1
         prob_densities /= num_models
         y_hat = tf.convert_to_tensor(np.where(prob_densities < 0.5, 0., 1.))
         confusion_matrix += multilabel_confusion_matrix(
